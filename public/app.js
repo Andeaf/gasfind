@@ -6,6 +6,7 @@ import { Map as MapLibreMap, GeolocateControl, AttributionControl } from '/vendo
 // ---------------------------------------------------------------------------
 const MIN_ZOOM = 10; // sub acest zoom nu mai cerem date (ar fi prea multe)
 const MAX_PARALLEL = 6; // cereri simultane către server
+const OSM_MAX_PARALLEL = 2; // din acestea, cel mult atâtea pentru OSM (lent, fără prețuri); restul dalelor OSM așteaptă în coadă
 const STALE_DAYS = 7; // prețurile mai vechi sunt afișate gri
 // O stație OSM (fără preț) e considerată dublura uneia cu preț dacă e la < 80 m de ea,
 // sau la < 300 m și are aceeași marcă (coordonatele surselor oficiale sunt uneori aproximative).
@@ -34,6 +35,7 @@ const state = {
   fails: new Map(),
   queue: [],
   active: 0,
+  activeOsm: 0,
   user: null,
   selected: null,
   errors: new Map(),
@@ -291,11 +293,12 @@ function planTiles() {
         if (t && t.state === 'ok' && now - t.at < t.ttl * 1000) continue;
         if (t && t.state === 'err' && now < t.retryAt) continue;
         const cx = (x + 0.5) * src.tile[0], cy = (y + 0.5) * src.tile[1];
-        jobs.set(key, { src, x, y, key, d: (cx - c.lng) ** 2 + (cy - c.lat) ** 2 });
+        // întâi sursele cu preț, apoi OSM; în cadrul fiecărei grupe, cele mai apropiate de centru
+        jobs.set(key, { src, x, y, key, pri: src.id === 'osm' ? 1 : 0, d: (cx - c.lng) ** 2 + (cy - c.lat) ** 2 });
       }
     }
   }
-  return [...jobs.values()].sort((a, b) => a.d - b.d).slice(0, 80);
+  return [...jobs.values()].sort((a, b) => a.pri - b.pri || a.d - b.d).slice(0, 80);
 }
 
 function update() {
@@ -310,10 +313,14 @@ function update() {
 }
 
 function pump() {
-  while (state.active < MAX_PARALLEL && state.queue.length) {
-    const job = state.queue.shift();
+  for (let i = 0; i < state.queue.length && state.active < MAX_PARALLEL; ) {
+    const job = state.queue[i];
+    const osm = job.src.id === 'osm';
+    if (osm && state.activeOsm >= OSM_MAX_PARALLEL) { i++; continue; } // OSM rămâne în coadă, nu blochează prețurile
+    state.queue.splice(i, 1);
     state.active++;
-    loadTile(job).finally(() => { state.active--; pump(); updateStatus(); });
+    if (osm) state.activeOsm++;
+    loadTile(job).finally(() => { state.active--; if (osm) state.activeOsm--; pump(); updateStatus(); });
   }
 }
 
