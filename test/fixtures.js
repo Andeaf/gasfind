@@ -54,13 +54,6 @@ export const DE_V4 = {
   searchCenter: { lat: 52.52, lng: 13.405 }, apiVersion: '4.0.7', timestamp: '2026-09-26T23:58:23+02', license: 'CC BY http://www.tankerkoenig.de',
 };
 
-export const DE_LEGACY = {
-  ok: true, license: 'CC BY 4.0 -  https://creativecommons.tankerkoenig.de', data: 'MTS-K', status: 'ok',
-  stations: [
-    { id: '474e5046-deaf-4f9b-9a32-9797b778f047', name: 'TotalEnergies Berlin', brand: 'TotalEnergies', street: 'Margarete-Sommer-Str.', place: 'Berlin', lat: 52.530831, lng: 13.440946, dist: 1.1, diesel: 2.409, e5: false, e10: 2.259, isOpen: false, houseNumber: '2', postCode: 1067 },
-  ],
-};
-
 export const AT_LIST = [
   { id: 1234, name: 'BP Wien Triester Straße', location: { address: 'Triester Straße 50', postalCode: '1100', city: 'Wien', latitude: 48.17, longitude: 16.35 }, prices: [{ fuelType: 'DIE', amount: 1.699, label: 'Diesel' }], open: true, distance: 1.2 },
   { id: 5678, name: 'Shell Wien', location: { address: 'Gürtel 1', postalCode: '1050', city: 'Wien', latitude: 48.19, longitude: 16.34 }, prices: [], open: true, distance: 2.0 },

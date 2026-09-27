@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import * as F from './fixtures.js';
 import { setTransport, clearMemo } from '../lib/http.js';
 import { handleTile, handleConfig, handleDetail } from '../lib/handler.js';
+import { resetRateGate } from '../lib/sources/de.js';
 import { splitBbox, bboxCenter } from '../lib/geo.js';
 
 const P = (o) => new URLSearchParams(o);
 let restore = () => {};
-afterEach(() => { restore(); clearMemo(); });
+afterEach(() => { restore(); clearMemo(); resetRateGate(); });
 
 function mock(fn) {
   const calls = [];
@@ -93,12 +94,42 @@ test('tile România: zone dense (50 rezultate) se subdivid', async () => {
   assert.ok(buffers.includes(2500), 'a cerut și cu rază 2500 m');
 });
 
-test('tile Germania: limită de cereri -> 503 cu Retry-After, fără cache', async () => {
+test('tile Germania: Tankerkönig 503 -> 503 cu Retry-After, fără cache', async () => {
   mock(() => ({ status: 503, text: 'rate limited', headers: {} }));
   const out = await handleTile(P({ s: 'de', x: 29, y: 175 }), { TANKERKOENIG_API_KEY: 'k' });
   assert.equal(out.status, 503);
   assert.equal(out.headers['Retry-After'], '60');
   assert.equal(out.headers['Cache-Control'], 'no-store');
+});
+
+test('tile Germania: o singură cerere pe minut per instanță, un singur endpoint (v4), cheia nu apare în răspuns', async () => {
+  const KEY = 'cheie-de-test-tankerkoenig';
+  const calls = mock((url) => {
+    assert.match(url, /\/api\/v4\/stations\/search\?/);
+    assert.match(url, /rad=\d+(\.\d+)?&/);
+    assert.ok(Number(url.match(/rad=([\d.]+)/)[1]) <= 25);
+    return ok(F.DE_V4);
+  });
+  const env = { TANKERKOENIG_API_KEY: KEY };
+  const a = await handleTile(P({ s: 'de', x: 29, y: 175 }), env);
+  assert.equal(a.status, 200);
+  assert.match(a.headers['Cache-Control'], /s-maxage=600/);
+  assert.equal(JSON.parse(a.body).stations[0].id, 'de:1c4f126b-1f3c-4b38-9692-05c400ea8e61');
+  // a doua dală, imediat: 503 local, fără nicio cerere către Tankerkönig
+  const b = await handleTile(P({ s: 'de', x: 30, y: 175 }), env);
+  assert.equal(b.status, 503);
+  assert.equal(b.headers['Cache-Control'], 'no-store');
+  const retry = Number(b.headers['Retry-After']);
+  assert.ok(retry >= 1 && retry <= 60, `Retry-After=${retry}`);
+  assert.equal(calls.length, 1, 'un singur apel real');
+  assert.ok(!b.body.includes(KEY));
+  // eroare de rețea: mesajul nu conține cheia (HttpError.url ar conține-o)
+  resetRateGate();
+  mock(() => { throw new Error('boom'); });
+  const c = await handleTile(P({ s: 'de', x: 29, y: 175 }), env);
+  assert.equal(c.status, 502);
+  assert.ok(!c.body.includes(KEY));
+  assert.match(JSON.parse(c.body).error, /Tankerkönig/);
 });
 
 test('tile Italia: 4 cereri POST pe zonă, rază ≤ 10 km', async () => {

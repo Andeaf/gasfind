@@ -7,6 +7,9 @@ import { Map as MapLibreMap, GeolocateControl, AttributionControl } from '/vendo
 const MIN_ZOOM = 10; // sub acest zoom nu mai cerem date (ar fi prea multe)
 const MAX_PARALLEL = 6; // cereri simultane către server
 const OSM_MAX_PARALLEL = 2; // din acestea, cel mult atâtea pentru OSM (lent, fără prețuri); restul dalelor OSM așteaptă în coadă
+// Germania (Tankerkönig): o singură cerere pe minut per cheie. O cerere DE în curs cel mult, și minimum
+// 61 s între două cereri care ajung la Tankerkönig (un răspuns din cache-ul CDN nu consumă din limită).
+const DE_MIN_INTERVAL_MS = 61000;
 const STALE_DAYS = 7; // prețurile mai vechi sunt afișate gri
 // O stație OSM (fără preț) e considerată dublura uneia cu preț dacă e la < 80 m de ea,
 // sau la < 300 m și are aceeași marcă (coordonatele surselor oficiale sunt uneori aproximative).
@@ -36,6 +39,9 @@ const state = {
   queue: [],
   active: 0,
   activeOsm: 0,
+  deBusy: false, // o cerere DE e în curs
+  deNextAt: 0, // cel mai devreme moment pentru următoarea cerere DE
+  deTimer: 0,
   user: null,
   selected: null,
   errors: new Map(),
@@ -315,19 +321,37 @@ function update() {
 function pump() {
   for (let i = 0; i < state.queue.length && state.active < MAX_PARALLEL; ) {
     const job = state.queue[i];
-    const osm = job.src.id === 'osm';
+    const osm = job.src.id === 'osm', de = job.src.id === 'de';
     if (osm && state.activeOsm >= OSM_MAX_PARALLEL) { i++; continue; } // OSM rămâne în coadă, nu blochează prețurile
+    if (de && (state.deBusy || Date.now() < state.deNextAt)) { scheduleDe(); i++; continue; } // Germania: una pe rând, o dată pe minut
     state.queue.splice(i, 1);
     state.active++;
     if (osm) state.activeOsm++;
-    loadTile(job).finally(() => { state.active--; if (osm) state.activeOsm--; pump(); updateStatus(); });
+    if (de) state.deBusy = true;
+    loadTile(job).finally(() => { state.active--; if (osm) state.activeOsm--; if (de) state.deBusy = false; pump(); updateStatus(); });
   }
+}
+
+/** Germania: repornește coada când expiră pauza de un minut (dalele DE sunt deja sortate după distanța de centru). */
+function scheduleDe() {
+  if (state.deTimer || state.deBusy) return;
+  const wait = Math.max(0, state.deNextAt - Date.now()) + 50;
+  state.deTimer = setTimeout(() => { state.deTimer = 0; pump(); updateStatus(); }, wait);
+}
+
+/** Germania: după o cerere care a ajuns la Tankerkönig (nu din cache-ul CDN), următoarea așteaptă 61 s sau cât spune Retry-After. */
+function noteDeRequest(res) {
+  const retry = Number(res.headers.get('Retry-After')) || 0;
+  const cached = res.headers.get('x-vercel-cache') === 'HIT';
+  if (retry) state.deNextAt = Math.max(state.deNextAt, Date.now() + retry * 1000);
+  else if (!cached) state.deNextAt = Math.max(state.deNextAt, Date.now() + DE_MIN_INTERVAL_MS);
 }
 
 async function loadTile({ src, x, y, key }) {
   state.tiles.set(key, { state: 'loading', at: Date.now() });
   try {
     const res = await fetch(`/api/tile?s=${src.id}&x=${x}&y=${y}`);
+    if (src.id === 'de') noteDeRequest(res);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       const err = new Error(body.error || `HTTP ${res.status}`);
@@ -473,6 +497,7 @@ function updateStatus() {
   if (!navigator.onLine) text = 'Fără conexiune la internet';
   else if (flashMsg) text = flashMsg;
   else if (map.getZoom() < MIN_ZOOM) text = 'Apropie harta ca să vezi benzinăriile';
+  else if (state.deBusy || state.queue.some((j) => j.src.id === 'de')) { text = 'Germania: prețurile se încarcă treptat, o zonă pe minut (limita Tankerkönig)'; spin = true; }
   else if (state.active || state.queue.length) { text = 'Se încarcă prețurile…'; spin = true; }
   else if (recentErrors.length) text = `Nu răspunde acum: ${recentErrors.join(', ')}. Reîncerc automat.`;
   if (!text) { el.hidden = true; return; }
@@ -507,6 +532,11 @@ function closeSheets() {
 for (const b of document.querySelectorAll('[data-close]')) b.addEventListener('click', closeSheets);
 addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheets(); });
 
+/** Atribuire obligatorie (ex. Tankerkönig, CC BY 4.0): textul sursei, cu link. */
+function attributionLink(src) {
+  return h('a', { href: src.attributionUrl, target: '_blank', rel: 'noopener' }, `${src.attribution} – ${new URL(src.attributionUrl).hostname}`);
+}
+
 function stationTitle(s) {
   const brand = s.brand?.trim(), name = s.name?.trim();
   if (brand && name && !name.toLowerCase().includes(brand.toLowerCase()) && name.toLowerCase() !== brand.toLowerCase()) return `${brand} · ${name}`;
@@ -537,9 +567,11 @@ function openCard(id) {
   const fuels = FUEL_ORDER.filter((f) => s.p?.[f] != null);
   const box = $('#card-prices');
   if (!fuels.length) {
-    box.replaceChildren(h('p', { class: 'empty' }, s._src === 'osm'
-      ? 'Nu există o sursă gratuită de prețuri pentru această țară. Stația apare din OpenStreetMap.'
-      : 'Sursa nu a publicat prețuri pentru această stație (de ex. în Austria doar cele mai ieftine au preț).'));
+    box.replaceChildren(h('p', { class: 'empty' }, s._src === 'osm' && s.cc === 'DE' && state.sourceById.de
+      ? 'Prețurile din Germania sosesc treptat, o zonă pe minut (limita Tankerkönig). Stația apare deocamdată din OpenStreetMap.'
+      : s._src === 'osm'
+        ? 'Nu există o sursă gratuită de prețuri pentru această țară. Stația apare din OpenStreetMap.'
+        : 'Sursa nu a publicat prețuri pentru această stație (de ex. în Austria doar cele mai ieftine au preț).'));
   } else {
     box.replaceChildren(...fuels.map((f) => {
       const stale = isStale(s, f);
@@ -559,8 +591,8 @@ function openCard(id) {
   if (s.x?.hw) meta.push('autostradă');
   if (s.x?.hours && s.x.hours.length < 60) meta.push(s.x.hours);
   const srcInfo = state.sourceById[s._src];
-  if (srcInfo) meta.push(`Sursa: ${srcInfo.attribution}`);
-  $('#card-meta').textContent = meta.join(' · ');
+  if (srcInfo) meta.push(srcInfo.attributionUrl ? ['Date: ', attributionLink(srcInfo)] : `Sursa: ${srcInfo.attribution}`);
+  $('#card-meta').replaceChildren(...meta.flatMap((m, i) => [i ? ' · ' : null, ...(Array.isArray(m) ? m : [m])].filter((x) => x != null)));
 
   const nav = $('#card-nav');
   nav.href = navUrl(s);
@@ -607,7 +639,7 @@ function renderList() {
 function openInfo() {
   const list = $('#info-sources');
   list.replaceChildren(...state.sources.map((s) => h('li', {},
-    h('b', {}, s.name), ' – ', s.attribution,
+    h('b', {}, s.name), ' – ', s.attributionUrl ? attributionLink(s) : s.attribution,
     SOURCE_NOTE[s.id] ? h('span', { class: 'tag' }, SOURCE_NOTE[s.id]) : null)));
   const extra = [];
   if (state.deMissingKey) extra.push('Germania: prețurile apar după ce adaugi cheia gratuită Tankerkönig (vezi README).');

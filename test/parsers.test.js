@@ -5,7 +5,7 @@ import { parse as parseFR } from '../lib/sources/fr.js';
 import { parse as parseES, provincesFor } from '../lib/sources/es.js';
 import { parse as parsePT, districtsFor } from '../lib/sources/pt.js';
 import { parse as parseIT } from '../lib/sources/it.js';
-import { parseV4, parseLegacy } from '../lib/sources/de.js';
+import { parseV4 } from '../lib/sources/de.js';
 import { parse as parseAT } from '../lib/sources/at.js';
 import { parse as parseSI } from '../lib/sources/si.js';
 import { parse as parseHR } from '../lib/sources/hr.js';
@@ -60,17 +60,13 @@ test('Italia: preț self-service preferat, benzină 100 ca 98+, HVO ignorat', ()
   assert.deepEqual(b.p, { e5: 2.139, diesel: 2.409, e98: 2.289, lpg: 0.899 });
 });
 
-test('Germania: API v4 cu ore și API clasic', () => {
+test('Germania: API v4 cu ora ultimei schimbări de preț', () => {
   const [s] = parseV4(F.DE_V4);
   assert.equal(s.id, 'de:1c4f126b-1f3c-4b38-9692-05c400ea8e61');
   assert.deepEqual(s.p, { diesel: 2.389, e5: 2.309, e10: 2.249 });
   assert.equal(s.t.diesel, '2026-09-26T18:50:18.000Z');
+  assert.equal(s.city, '10407 Berlin');
   assert.equal(s.open, true);
-  const [l] = parseLegacy(F.DE_LEGACY);
-  assert.deepEqual(l.p, { diesel: 2.409, e10: 2.259 });
-  assert.equal(l.city, '01067 Berlin');
-  assert.equal(l.addr, 'Margarete-Sommer-Str. 2');
-  assert.equal(l.open, false);
 });
 
 test('Austria: doar stațiile ieftine au preț; răspuns HTML = eroare', () => {
