@@ -5,6 +5,9 @@ import { readXlsx, unzip, excelDate, colIndex } from '../lib/xlsx.js';
 import { parse as parseWob, findFileUrl } from '../lib/ref/wob.js';
 import { parse as parseBe, parseDay } from '../lib/ref/be.js';
 import { parse as parseLu, parseCsv } from '../lib/ref/lu.js';
+import { parse as parseRs, findNotice, parseSerbianDate } from '../lib/ref/rs.js';
+import { parse as parseMe, findArticle } from '../lib/ref/me.js';
+import { parseEcb, parseBnm, parseNbs, parseNbrm, getRates } from '../lib/fx.js';
 import * as F from './fixtures.js';
 import { setTransport, clearMemo } from '../lib/http.js';
 import { handleRef } from '../lib/handler.js';
@@ -90,6 +93,10 @@ test('/api/ref: o singură descărcare (memo), cache CDN 4 h, sursele și țări
     if (/weekly-oil-bulletin_en$/.test(url)) return { status: 200, text: '<a href="/document/download/264c2d0f-f161-4ea3-a777-78faae59bea0_en" data-untranslated-label="Prices with taxes latest prices">x</a>', headers: {} };
     if (/document\/download/.test(url)) { assert.equal(opts.binary, true); return { status: 200, buffer: WOB_FILE, headers: {} }; }
     if (/bestat\.statbel/.test(url)) return { status: 200, text: JSON.stringify(F.BE_BESTAT), headers: {} };
+    if (/must\.gov\.rs\/rss/.test(url)) return { status: 200, text: F.RS_RSS, headers: {} };
+    if (/must\.gov\.rs\/vest\//.test(url)) return { status: 200, text: F.RS_NOTICE, headers: {} };
+    if (/wapi\.gov\.me/.test(url)) return { status: 200, text: JSON.stringify(F.ME_LIST), headers: {} };
+    if (/gov\.me\/clanak\//.test(url)) return { status: 200, text: F.ME_ARTICLE, headers: {} };
     if (/lustat\.statec\.lu/.test(url)) { assert.equal(opts.headers.Accept, 'application/vnd.sdmx.data+csv;labels=both'); const i = ['E5301', 'E5302', 'E5305'].findIndex((f) => url.includes(f)); return { status: 200, text: F.LU_SDMX[i], headers: {} }; }
     throw new Error('offline'); // cursuri valutare: cad pe valorile de rezervă
   });
@@ -109,9 +116,18 @@ test('/api/ref: o singură descărcare (memo), cache CDN 4 h, sursele și țări
   assert.equal(body.countries.LU.p.e5, 1.835);
   assert.equal(body.countries.FR.kind, 'avg');
   assert.equal(body.sources.lu.license, 'CC0');
-  const before = calls.filter((u) => /europa\.eu/.test(u)).length;
+  // Serbia: RSD, convertit în EUR cu cursul de rezervă (sursele de curs sunt „offline” în acest test)
+  assert.equal(body.countries.RS.cur, 'RSD');
+  assert.equal(body.countries.RS.p.diesel, 236);
+  assert.ok(Math.abs(body.countries.RS.eur.diesel - 236 / 117.5) < 0.002, JSON.stringify(body.countries.RS.eur));
+  assert.equal(body.countries.RS.until, '2026-10-02');
+  assert.deepEqual(body.countries.ME.p, { e5: 1.74, e98: 1.78, diesel: 1.95 });
+  assert.equal(body.countries.ME.date, '2026-09-22');
+  const wob = () => calls.filter((u) => /energy\.ec\.europa\.eu/.test(u)).length; // nu și BCE (cursurile se reîncearcă când pică)
+  const before = wob();
+  assert.equal(before, 2, 'pagina + fișierul');
   await handleRef({});
-  assert.equal(calls.filter((u) => /europa\.eu/.test(u)).length, before, 'a doua cerere vine din memo');
+  assert.equal(wob(), before, 'a doua cerere vine din memo');
 });
 
 test('/api/ref: sursa picată -> 200 fără țări, fără cache; mock -> date de test', async () => {
@@ -143,5 +159,50 @@ test('Luxemburg: LUSTAT SDMX CSV -> ultima observație per carburant, EUR/L', ()
   assert.deepEqual(r.LU.p, { e98: 2.059, e5: 1.835, diesel: 2.095, lpg: 0.83 });
   assert.equal(r.LU.date, '2026-09-25');
   assert.throws(() => parseLu([F.LU_SDMX[2]]), /SP95\/DIE/);
+});
+
+
+test('Serbia: anunțul din RSS, prețurile în RSD, perioada de valabilitate', () => {
+  assert.equal(parseSerbianDate('25. септембра 2026'), '2026-09-25');
+  assert.equal(parseSerbianDate('02. октобра 2026'), '2026-10-02');
+  assert.equal(parseSerbianDate('25. септембар 2026.'), '2026-09-25');
+  assert.equal(parseSerbianDate('1. маја 2027'), '2027-05-01');
+  assert.equal(findNotice(F.RS_RSS), 'https://must.gov.rs/vest/22207');
+  assert.equal(findNotice('<rss><channel><item><title>Altceva</title><link>x</link></item></channel></rss>'), null);
+  assert.deepEqual(parseRs(F.RS_NOTICE), { RS: { kind: 'max', cur: 'RSD', p: { diesel: 236, e5: 207 }, date: '2026-09-25', until: '2026-10-02' } });
+  assert.throws(() => parseRs('<p>nimic</p>'), /prețurile/);
+});
+
+test('Muntenegru: articolul „Nove cijene goriva”, prețuri EUR/L', () => {
+  assert.deepEqual(findArticle(F.ME_LIST), { slug: 'nove-cijene-goriva-od-22092026', date: '2026-09-22' });
+  assert.equal(findArticle({ data: { data: [{ title: 'Altceva', slug: 'x' }] } }), null);
+  assert.deepEqual(parseMe(F.ME_ARTICLE, '2026-09-22'), { ME: { kind: 'max', cur: 'EUR', p: { e5: 1.74, e98: 1.78, diesel: 1.95 }, date: '2026-09-22' } });
+  assert.throws(() => parseMe('<p>nimic</p>', '2026-09-22'), /prețurile/);
+});
+
+test('cursuri: BCE (toate monedele), BNM, NBS, NBRM; toate picate -> valori de rezervă', async () => {
+  assert.deepEqual(parseEcb(F.ECB_XML), { rates: { USD: 1.1712, DKK: 7.4635, GBP: 0.8712, RON: 5.2811, CZK: 24.318 }, date: '2026-09-25' });
+  assert.equal(parseBnm('<ValCurs><Valute><CharCode>EUR</CharCode><Nominal>1</Nominal><Value>19.8765</Value></Valute></ValCurs>'), 19.8765);
+  assert.equal(parseNbs(F.NBS_HTML), 117.4831);
+  assert.equal(parseNbrm(F.NBRM_JSON), 61.6044);
+  assert.equal(parseNbrm([]), null);
+  restore = setTransport(async (url) => {
+    if (/ecb\.europa\.eu/.test(url)) return { status: 200, text: F.ECB_XML, headers: {} };
+    if (/nbs\.rs/.test(url)) return { status: 200, text: F.NBS_HTML, headers: {} };
+    if (/nbrm\.mk/.test(url)) return { status: 200, text: JSON.stringify(F.NBRM_JSON), headers: {} };
+    throw new Error('offline');
+  });
+  const fx = await getRates();
+  assert.equal(fx.source, 'ECB');
+  assert.equal(fx.rates.DKK, 7.4635);
+  assert.equal(fx.rates.RSD, 117.4831);
+  assert.equal(fx.rates.MKD, 61.6044);
+  assert.equal(fx.rates.MDL, 20.0, 'BNM offline -> rezervă');
+  clearMemo();
+  restore();
+  restore = setTransport(async () => { throw new Error('offline'); });
+  const fb = await getRates();
+  assert.equal(fb.source, 'fallback');
+  assert.equal(fb.rates.RON, 5.28);
 });
 

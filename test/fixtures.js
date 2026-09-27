@@ -136,3 +136,48 @@ LU1:DSD_PRIX_ESSENCE@DF_E5302(1.0),PRIX: Fuel prices,EUR_LI: Euro per liter,I: I
   `DATAFLOW,MEASURE: Measure,UNIT_MEASURE: Unit of measure,FREQ: Frequency,MOTOR_ENERGY: Motor Energy,COMMON_PRODUCT: Common products,BASE_PERIOD: Base period,CONSTR_TRADE: Construction trades,ACTIVITY: Economic activity (NACE Rev.2),BUILDING_TYPE: Building type,MARKET: Market,PRODUCT_CPA_2_2: Products (CPA 2.2),TIME_TRANS: Time transformation,NRG_SRC: Energy source,TIME_PERIOD: Time period,OBS_VALUE,UNIT_MULT: Unit multiplier,OBS_STATUS: Observation status,DECIMALS: Decimals,COMMENT_DSET: Comments on the dataset levels,COMMENT_OBS: Comments to the observation value,COMMENT_TS_CONSTR_TRADE: Detailed description of the group of series
 LU1:DSD_PRIX_ESSENCE@DF_E5305(1.0),PRIX: Fuel prices,EUR_LI: Euro per liter,I: Irregular,LPG: Liquefied petroleum gases (LPG),_Z: Not Applicable,_Z: Not Applicable,_Z: Not Applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not aplicable,_Z: Not applicable,2026-09-17,0.83,0: Units,,3: Three,,,`,
 ];
+
+// Serbia: RSS must.gov.rs (scurtat) și anunțul de preț maxim din 25 sept. 2026 (fragment)
+export const RS_RSS = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>МУСТ</title>
+<item><title>Лазаревић са амбасадором Аустрије Еном Дрофеником: Растућа трговинска сарадња, Експо 2027 у фокусу </title>
+        <link>https://must.gov.rs/vest/22147</link>
+                <description>
+            <p class="isselectedend">Аустрија је један од најзначајнијих привредних партнера Србије – трећи је највећи страни инвеститор, изузетно важан спољнотрговински партнер и значајно тржиште за српски...</description></item>
+<item><title>ОБАВЕШТЕЊЕ О НАЈВИШОЈ МАЛОПРОДАЈНОЈ ЦЕНИ ДЕРИВАТА НАФТЕ EVRO DIZEL И EVRO PREMIJUM BMB 95</title>
+        <link>https://must.gov.rs/vest/22207</link>
+                <description>
+            <p>У складу са чланом 3. став 4. Уредбе о ограничењу висине цена деривата нафте („Сл. гласник РС 75/2026"), утврђује се највиша малопродајна цена деривата нафте за период од 15 часова 25. септем...</description></item>
+</channel></rss>`;
+export const RS_NOTICE = `<html><body><article><div class="article-date">
+                                                                                                            25. септембар 2026.                                </div>
+<h1>ОБАВЕШТЕЊЕ О НАЈВИШОЈ МАЛОПРОДАЈНОЈ ЦЕНИ ДЕРИВАТА НАФТЕ EVRO DIZEL И EVRO PREMIJUM BMB 95</h1>
+<p>У складу са чланом 3. став 4. Уредбе о ограничењу висине цена деривата нафте (&bdquo;Сл. гласник РС 75/2026"), утврђује се највиша малопродајна цена деривата нафте за период од 15 часова 25. септембра 2026.године до 15 часова 02. октобра 2026. године, и то за:</p>                                    </div>
+                                    <div class="text-content">
+    <div class='text_center'><div class='clearfix'></div><div class='printable'><div><ol>
+<li>EVRO DIZEL, у износу 236,00 динара за један литар и</li>
+<li>EVRO PREMIJUM BMB 95 у износу 207,00 динара за један литар.</li>
+</ol>
+<p>Такође, у складу са чланом 3. став 6. наведене уредбе, обавештавају се привредни субјекти који обављају делатност трговине моторним и другим горивима на станицама за снабдевање превозних средстава да су дужни да утврђене малопродајне цене деривата нафте примене одмах по објављивању на званичној интернет страници Министарства унутрашње и спољне трговине.</p></div><div style="overflow: auto; clear: both;"></div></div></div><div class='text_center'><div class='clearfix'></div><div class='printable'><div style="overflow: auto; clear: both;"></div></div></div></div>                                </div>
+                                <div class="article-slider-container">
+                                    <div class="col-lg-5">
+                                        <div id="article-slider-gallery" class="flexslider">
+                                            <ul class="slides">
+                                                                                            </ul>
+</article></body></html>`;
+
+// Muntenegru: lista de articole din wapi.gov.me (scurtată) și articolul „Nove cijene goriva od 22.09.2026” (fragment)
+export const ME_LIST = { data: { data: [{"id":170211,"title":"Nove cijene goriva od 22.09.2026","slug":"nove-cijene-goriva-od-22092026","published_at":"2026-09-21 19:47:11"},{"id":170009,"title":"Crna Gora i Švedska: prostor za snažnije partnerstvo u energetici","slug":"crna-gora-i-svedska-prostor-za-snaznije-partnerstvo-u-energetici","published_at":"2026-09-15 17:00:00"},{"id":169972,"title":"Nove cijene goriva od 15.09.2026","slug":"nove-cijene-goriva-od-15092026","published_at":"2026-09-14 20:01:31"}] } };
+export const ME_ARTICLE = `<html><body><main><h1>Nove cijene goriva od 22.09.2026</h1>
+<span _ngcontent-sc243="" class="font-medium">Objavljeno: </span><span _ngcontent-sc243="" class="font-light"> 21.09.2026. <span _ngcontent-sc243="">•</span> 19:47 </span></span><!----><span _ngcontent-sc243="" class="block text-gray-200 text-18 leading-100"><span _ngcontent-sc243="" class="font-medium">Autor: </span><!----><a _ngcontent-sc243="" class="font-light text-cyprus hover:underline" title="Ministarstvo energetike i rudarstva" aria-label="Ministarstvo energetike i rudarstva" href="/pretraga?author=1985"> Ministarstvo energetike i rudarstva </a><!----></span><!----></div></app-article-meta><span class="block border-t border-gray-300 mt-4 mb-8"></span><app-article-toc _nghost-sc244=""><!----></app-article-toc><app-article-body><section class="relative ui-article-spacing"><div id="ui-article" class="ui-article"><div><div><p>Poštovani,</p><p>Obavještavamo vas da od 22. septembra 2026. godine važe sljedeće maksimalne maloprodajne cijene naftnih derivata:</p><p><strong>EUROSUPER 98 1.78 €/l (+0.02)<br><br>EUROSUPER 95 1.74 €/l (+0.02)<br><br>EURODIZEL 1.95 €/l (+0.05)<br><br>LOŽ ULJE 2.07 €/l (+0,09)</strong></p><p>Obračun maksimalnih maloprodajnih cijena navedenih derivata izvršen je u skladu sa Odlukom o umanjenju iznosa akcize za promet bezolovnog benzina i gasnih ulja po kojoj je akciza na benzin snizena 30% a na dizel 40 %, koja je donijeta na danasnjoj sjednici Vlade i Uredbom o načinu obračuna maksimalne maloprodajne cijene određenih vrsta naftnih derivata („Službeni list Crne Gore“, br. 40/26).</p><p>Navedene cijene važiće od 22. do 28. septembra 2026. godine.</p><p>Naredni obračun biće izvršen 28. septembra 2026. godine, nakon čega će biti objavljene cijene koje će važiti od 29. septembra 2026. godine.</p>
+</main></body></html>`;
+
+// Cursuri: NBS (rândul EUR din lista cursului mediu), NBRM (JSON), BCE (XML scurtat, ratele sunt ilustrative)
+export const NBS_HTML = `<table><tr>
+                        <td>EUR</td>
+                        <td>978</td>
+                            <td>&#x415;&#x41C;&#x423;</td>
+                        <td>1</td>
+                                <td>117,4831</td>
+                    </tr></table>`;
+export const NBRM_JSON = [{"rBr":180,"datum":"2026-09-26T00:00:00","valuta":"840","oznaka":"USD","drzava":"С А Д","nomin":1,"kupoven":53.7546,"sreden":54.0247,"prodazen":54.2948,"drzavaAng":"USA","drzavaAl":"SHBA","nazivMak":"САД долар","nazivAng":"US dollar","nazivAl":"Dollari Amerikan","datum_f":"2026-09-25T00:00:00"},{"rBr":180,"datum":"2026-09-27T00:00:00","valuta":"978","oznaka":"EUR","drzava":"ЕМУ","nomin":1,"kupoven":61.2964,"sreden":61.6044,"prodazen":61.9124,"drzavaAng":"EMU","drzavaAl":"UEM","nazivMak":"евро","nazivAng":"Euro","nazivAl":"Euro","datum_f":"2026-09-25T00:00:00"},{"rBr":180,"datum":"2026-09-27T00:00:00","valuta":"840","oznaka":"USD","drzava":"С А Д","nomin":1,"kupoven":53.7546,"sreden":54.0247,"prodazen":54.2948,"drzavaAng":"USA","drzavaAl":"SHBA","nazivMak":"САД долар","nazivAng":"US dollar","nazivAl":"Dollari Amerikan","datum_f":"2026-09-25T00:00:00"}];
+export const ECB_XML = `<gesmes:Envelope><Cube><Cube time='2026-09-25'><Cube currency='USD' rate='1.1712'/><Cube currency='DKK' rate='7.4635'/><Cube currency='GBP' rate='0.8712'/><Cube currency='RON' rate='5.2811'/><Cube currency='CZK' rate='24.318'/></Cube></Cube></gesmes:Envelope>`;
