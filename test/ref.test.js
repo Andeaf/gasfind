@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readXlsx, unzip, excelDate, colIndex } from '../lib/xlsx.js';
 import { parse as parseWob, findFileUrl } from '../lib/ref/wob.js';
+import { parse as parseBe, parseDay } from '../lib/ref/be.js';
+import { parse as parseLu, parseCsv } from '../lib/ref/lu.js';
+import * as F from './fixtures.js';
 import { setTransport, clearMemo } from '../lib/http.js';
 import { handleRef } from '../lib/handler.js';
 
@@ -86,6 +89,8 @@ test('/api/ref: o singură descărcare (memo), cache CDN 4 h, sursele și țări
     calls.push(url);
     if (/weekly-oil-bulletin_en$/.test(url)) return { status: 200, text: '<a href="/document/download/264c2d0f-f161-4ea3-a777-78faae59bea0_en" data-untranslated-label="Prices with taxes latest prices">x</a>', headers: {} };
     if (/document\/download/.test(url)) { assert.equal(opts.binary, true); return { status: 200, buffer: WOB_FILE, headers: {} }; }
+    if (/bestat\.statbel/.test(url)) return { status: 200, text: JSON.stringify(F.BE_BESTAT), headers: {} };
+    if (/lustat\.statec\.lu/.test(url)) { assert.equal(opts.headers.Accept, 'application/vnd.sdmx.data+csv;labels=both'); const i = ['E5301', 'E5302', 'E5305'].findIndex((f) => url.includes(f)); return { status: 200, text: F.LU_SDMX[i], headers: {} }; }
     throw new Error('offline'); // cursuri valutare: cad pe valorile de rezervă
   });
   const a = await handleRef({});
@@ -96,6 +101,14 @@ test('/api/ref: o singură descărcare (memo), cache CDN 4 h, sursele și țări
   assert.equal(body.countries.HU.src, 'wob');
   assert.equal(body.countries.HU.kind, 'avg');
   assert.equal(body.sources.wob.license, 'CC BY 4.0');
+  // sursele cu preț maxim suprascriu media UE
+  assert.equal(body.countries.BE.kind, 'max');
+  assert.equal(body.countries.BE.src, 'be');
+  assert.equal(body.countries.BE.p.diesel, 2.494);
+  assert.equal(body.countries.LU.kind, 'max');
+  assert.equal(body.countries.LU.p.e5, 1.835);
+  assert.equal(body.countries.FR.kind, 'avg');
+  assert.equal(body.sources.lu.license, 'CC0');
   const before = calls.filter((u) => /europa\.eu/.test(u)).length;
   await handleRef({});
   assert.equal(calls.filter((u) => /europa\.eu/.test(u)).length, before, 'a doua cerere vine din memo');
@@ -111,3 +124,24 @@ test('/api/ref: sursa picată -> 200 fără țări, fără cache; mock -> date d
   assert.equal(m.countries.BE.kind, 'max');
   assert.ok(m.countries.HU.p.diesel > 1);
 });
+
+test('Belgia: be.STAT -> preț maxim pe ziua cea mai recentă, produsele mapate', () => {
+  assert.equal(parseDay('28SEP26'), '2026-09-28');
+  assert.equal(parseDay('1JAN27'), '2027-01-01');
+  assert.equal(parseDay('x'), null);
+  const r = parseBe(F.BE_BESTAT);
+  assert.deepEqual(r, { BE: { kind: 'max', cur: 'EUR', p: { e5: 2.148, e10: 2.108, e98: 2.322, diesel: 2.494, lpg: 0.972 }, date: '2026-09-28' } });
+  assert.throws(() => parseBe({ facts: [] }), /nicio zi/);
+  assert.throws(() => parseBe({ facts: [{ Produit: 'Essence 95 RON E5 (€/L)', Jour: '28SEP26', 'Prix TVA incl.': 2.1 }] }), /lipsesc/);
+});
+
+test('Luxemburg: LUSTAT SDMX CSV -> ultima observație per carburant, EUR/L', () => {
+  assert.deepEqual(parseCsv('a,"b,c",d\r\n1,"x""y",3\n'), [['a', 'b,c', 'd'], ['1', 'x"y', '3']]);
+  const r = parseLu(F.LU_SDMX);
+  assert.equal(r.LU.kind, 'max');
+  assert.equal(r.LU.cur, 'EUR');
+  assert.deepEqual(r.LU.p, { e98: 2.059, e5: 1.835, diesel: 2.095, lpg: 0.83 });
+  assert.equal(r.LU.date, '2026-09-25');
+  assert.throws(() => parseLu([F.LU_SDMX[2]]), /SP95\/DIE/);
+});
+

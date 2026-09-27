@@ -108,3 +108,31 @@ export const OSM_JSON = {
     { type: 'node', id: 303, lat: 47.66, lon: 26.23, tags: { amenity: 'fuel', access: 'private', name: 'Flotă' } },
   ],
 };
+
+// Belgia: be.STAT „Tarif officiel produits pétroliers – dernière mise à jour” (JSON), 27–28 sept. 2026
+export const BE_BESTAT = {
+  facts: [
+    {"Groupe de produits":"Essences","Produit":"Essence 95 RON E5 (€/L)","Jour":"28SEP26","Prix TVA excl.":1.7752,"Difference TVA incl.":null,"Prix TVA incl.":2.148},
+    {"Groupe de produits":"Essences","Produit":"Essence 95 RON E10 (€/L)","Jour":"28SEP26","Prix TVA excl.":1.7421,"Difference TVA incl.":null,"Prix TVA incl.":2.108},
+    {"Groupe de produits":"Essences","Produit":"Essence 98 RON E5 (€/L)","Jour":"28SEP26","Prix TVA excl.":1.919,"Difference TVA incl.":null,"Prix TVA incl.":2.322},
+    {"Groupe de produits":"Gasoil Diesel routier","Produit":"Diesel B7 (€/L)","Jour":"28SEP26","Prix TVA excl.":2.0612,"Difference TVA incl.":null,"Prix TVA incl.":2.494},
+    {"Groupe de produits":"Gasoil Diesel routier","Produit":"Diesel B10 (€/L)","Jour":"28SEP26","Prix TVA excl.":2.0545,"Difference TVA incl.":null,"Prix TVA incl.":2.486},
+    {"Groupe de produits":"Gasoil de chauffage","Produit":"Gasoil chauffage (H0/H7) (à la pompe) (€/L)","Jour":"28SEP26","Prix TVA excl.":1.4182,"Difference TVA incl.":null,"Prix TVA incl.":1.716},
+    {"Groupe de produits":"Butane + LPG","Produit":"Autogas LPG (à la pompe) (€/L)","Jour":"28SEP26","Prix TVA excl.":0.8033,"Difference TVA incl.":null,"Prix TVA incl.":0.972},
+    {"Groupe de produits":"Fuel Oil","Produit":"Fuel oil extra lourd 1% S (en camion citerne) (€/T)","Jour":"28SEP26","Prix TVA excl.":null,"Difference TVA incl.":null,"Prix TVA incl.":null},
+    {"Groupe de produits":"Gasoil Diesel routier","Produit":"Diesel B7 (€/L)","Jour":"27SEP26","Prix TVA excl.":null,"Difference TVA incl.":null,"Prix TVA incl.":2.494},
+  ],
+};
+
+// Luxemburg: LUSTAT SDMX CSV (labels=both), fluxurile DF_E5301 (benzină), DF_E5302 (motorină), DF_E5305 (GPL)
+export const LU_SDMX = [
+  `DATAFLOW,MEASURE: Measure,UNIT_MEASURE: Unit of measure,FREQ: Frequency,MOTOR_ENERGY: Motor Energy,COMMON_PRODUCT: Common products,BASE_PERIOD: Base period,CONSTR_TRADE: Construction trades,ACTIVITY: Economic activity (NACE Rev.2),BUILDING_TYPE: Building type,MARKET: Market,PRODUCT_CPA_2_2: Products (CPA 2.2),TIME_TRANS: Time transformation,NRG_SRC: Energy source,TIME_PERIOD: Time period,OBS_VALUE,UNIT_MULT: Unit multiplier,OBS_STATUS: Observation status,DECIMALS: Decimals,COMMENT_DSET: Comments on the dataset levels,COMMENT_OBS: Comments to the observation value,COMMENT_TS_CONSTR_TRADE: Detailed description of the group of series
+LU1:DSD_PRIX_ESSENCE@DF_E5301(1.0),PRIX: Fuel prices,EUR_LI: Euro per liter,I: Irregular,SP98: 98 octane unleaded petrol,_Z: Not Applicable,_Z: Not Applicable,_Z: Not Applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not aplicable,_Z: Not applicable,2026-09-24,2.059,0: Units,,3: Three,,,
+LU1:DSD_PRIX_ESSENCE@DF_E5301(1.0),PRIX: Fuel prices,EUR_LI: Euro per liter,I: Irregular,SP95: 95 octane unleded petrol,_Z: Not Applicable,_Z: Not Applicable,_Z: Not Applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not aplicable,_Z: Not applicable,2026-09-24,1.835,0: Units,,3: Three,,,
+LU1:DSD_PRIX_ESSENCE@DF_E5301(1.0),PRIX: Fuel prices,EUR_LI: Euro per liter,I: Irregular,SP95: 95 octane unleded petrol,_Z: Not Applicable,_Z: Not Applicable,_Z: Not Applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not aplicable,_Z: Not applicable,2026-09-18,1.849,0: Units,,3: Three,,,`,
+  `DATAFLOW,MEASURE: Measure,UNIT_MEASURE: Unit of measure,FREQ: Frequency,MOTOR_ENERGY: Motor Energy,COMMON_PRODUCT: Common products,BASE_PERIOD: Base period,CONSTR_TRADE: Construction trades,ACTIVITY: Economic activity (NACE Rev.2),BUILDING_TYPE: Building type,MARKET: Market,PRODUCT_CPA_2_2: Products (CPA 2.2),TIME_TRANS: Time transformation,NRG_SRC: Energy source,TIME_PERIOD: Time period,OBS_VALUE,UNIT_MULT: Unit multiplier,OBS_STATUS: Observation status,DECIMALS: Decimals,COMMENT_DSET: Comments on the dataset levels,COMMENT_OBS: Comments to the observation value,COMMENT_TS_CONSTR_TRADE: Detailed description of the group of series
+LU1:DSD_PRIX_ESSENCE@DF_E5302(1.0),PRIX: Fuel prices,EUR_LI: Euro per liter,I: Irregular,DIE: Diesel,_Z: Not Applicable,_Z: Not Applicable,_Z: Not Applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not aplicable,_Z: Not applicable,2026-09-25,2.095,0: Units,,3: Three,,,
+LU1:DSD_PRIX_ESSENCE@DF_E5302(1.0),PRIX: Fuel prices,EUR_LI: Euro per liter,I: Irregular,DIE: Diesel,_Z: Not Applicable,_Z: Not Applicable,_Z: Not Applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not aplicable,_Z: Not applicable,2026-09-23,2.055,0: Units,,3: Three,,,`,
+  `DATAFLOW,MEASURE: Measure,UNIT_MEASURE: Unit of measure,FREQ: Frequency,MOTOR_ENERGY: Motor Energy,COMMON_PRODUCT: Common products,BASE_PERIOD: Base period,CONSTR_TRADE: Construction trades,ACTIVITY: Economic activity (NACE Rev.2),BUILDING_TYPE: Building type,MARKET: Market,PRODUCT_CPA_2_2: Products (CPA 2.2),TIME_TRANS: Time transformation,NRG_SRC: Energy source,TIME_PERIOD: Time period,OBS_VALUE,UNIT_MULT: Unit multiplier,OBS_STATUS: Observation status,DECIMALS: Decimals,COMMENT_DSET: Comments on the dataset levels,COMMENT_OBS: Comments to the observation value,COMMENT_TS_CONSTR_TRADE: Detailed description of the group of series
+LU1:DSD_PRIX_ESSENCE@DF_E5305(1.0),PRIX: Fuel prices,EUR_LI: Euro per liter,I: Irregular,LPG: Liquefied petroleum gases (LPG),_Z: Not Applicable,_Z: Not Applicable,_Z: Not Applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not applicable,_Z: Not aplicable,_Z: Not applicable,2026-09-17,0.83,0: Units,,3: Three,,,`,
+];
