@@ -1,0 +1,110 @@
+:root {
+  --bg: #ffffff;
+  --fg: #0f172a;
+  --muted: #475569;
+  --line: #e2e8f0;
+  --chip: #ffffff;
+  --chip-fg: #0f172a;
+  --accent: #0f766e;
+  --accent-fg: #ffffff;
+  --shadow: 0 2px 10px rgba(15, 23, 42, .18);
+  --c0: #15803d; --c1: #4d7c0f; --c2: #b45309; --c3: #c2410c; --c4: #b91c1c; --c5: #6b7280;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111827; --fg: #f1f5f9; --muted: #94a3b8; --line: #334155;
+    --chip: #1f2937; --chip-fg: #f1f5f9; --accent: #14b8a6; --accent-fg: #042f2e;
+    --shadow: 0 2px 12px rgba(0, 0, 0, .5);
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg);
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent; }
+#map { position: fixed; inset: 0; }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+/* Bara de sus: carburanți */
+.topbar { position: fixed; top: 0; left: 0; right: 0; padding: calc(var(--safe-top) + 10px) 0 0; pointer-events: none; z-index: 5; }
+.fuels { display: flex; gap: 6px; overflow-x: auto; padding: 0 10px 6px; scrollbar-width: none; pointer-events: auto; }
+.fuels::-webkit-scrollbar { display: none; }
+.chip { flex: 0 0 auto; border: 1px solid var(--line); background: var(--chip); color: var(--chip-fg); border-radius: 999px;
+  padding: 8px 11px; min-height: 40px; font-size: 14.5px; font-weight: 650; box-shadow: var(--shadow); cursor: pointer; }
+.chip[aria-checked="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.status { margin: 4px auto 0; width: max-content; max-width: calc(100% - 24px); background: var(--chip); color: var(--fg);
+  border-radius: 999px; padding: 7px 14px; font-size: 13.5px; box-shadow: var(--shadow); pointer-events: auto; text-align: center; }
+.status .spin { display: inline-block; width: 12px; height: 12px; margin-right: 7px; vertical-align: -1px; border: 2px solid var(--line);
+  border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Butoane rotunde */
+.fabs { position: fixed; right: 12px; bottom: calc(var(--safe-bottom) + 28px); display: flex; flex-direction: column; gap: 10px; z-index: 4;
+  transition: transform .2s ease; }
+body.sheet-open .fabs { transform: translateY(calc(-1 * var(--sheet-h, 0px))); }
+body.sheet-tall-open .fabs { display: none; }
+.fab { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); background: var(--chip); color: var(--fg);
+  box-shadow: var(--shadow); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.fab svg { width: 24px; height: 24px; }
+.fab.active { color: var(--accent); }
+
+/* Foi de jos (bottom sheets) */
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--bg); color: var(--fg);
+  border-radius: 18px 18px 0 0; box-shadow: 0 -4px 24px rgba(15, 23, 42, .22);
+  padding: 16px 16px calc(var(--safe-bottom) + 16px); max-height: 70vh; overflow-y: auto; animation: up .18s ease-out; }
+.sheet-tall { max-height: 78vh; }
+@keyframes up { from { transform: translateY(30px); opacity: .6; } }
+@media (min-width: 700px) { .sheet { left: 12px; right: auto; width: 400px; bottom: 12px; border-radius: 18px; } }
+.sheet h2 { margin: 0 44px 2px 0; font-size: 19px; line-height: 1.25; }
+.sheet h3 { margin: 16px 0 6px; font-size: 15px; }
+.sheet-close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border: 0; background: transparent; border-radius: 50%; cursor: pointer; display: grid; place-items: center; color: var(--muted); }
+.sheet-close svg { width: 22px; height: 22px; }
+.card-sub { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+.card-meta { margin: 10px 0 14px; color: var(--muted); font-size: 13px; }
+
+.prices { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.price { display: grid; grid-template-columns: 1fr auto auto; align-items: baseline; gap: 2px 10px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.price:first-child { border-top: 0; }
+.price .l { font-size: 14.5px; }
+.price .v { font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.price .v small { font-size: 13px; font-weight: 600; margin-left: 3px; }
+.price .e { grid-column: 2; grid-row: 1; font-size: 12.5px; color: var(--muted); text-align: right; white-space: nowrap; }
+.price .v { grid-column: 3; }
+.price.sel { background: color-mix(in srgb, var(--accent) 12%, transparent); box-shadow: inset 4px 0 0 var(--accent); }
+.price.sel .l { font-weight: 700; }
+.price.old .v { color: var(--muted); }
+.price.old .l::after { content: " (preț vechi)"; color: var(--muted); font-size: 12.5px; }
+.empty { color: var(--muted); font-size: 14px; }
+
+.nav-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; border-radius: 14px;
+  background: var(--accent); color: var(--accent-fg); text-decoration: none; font-weight: 700; font-size: 16.5px; }
+.nav-btn svg { width: 20px; height: 20px; }
+
+/* Lista celor mai ieftine */
+.rank { list-style: none; margin: 0; padding: 0; }
+.rank li button { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; width: 100%; text-align: left;
+  background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 11px 2px; cursor: pointer; }
+.rank .p { font-weight: 800; font-variant-numeric: tabular-nums; min-width: 78px; }
+.rank .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank .d { color: var(--muted); font-size: 13px; white-space: nowrap; }
+
+.dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+.dot.c0 { background: var(--c0); } .dot.c1 { background: var(--c1); } .dot.c2 { background: var(--c2); }
+.dot.c3 { background: var(--c3); } .dot.c4 { background: var(--c4); } .dot.c5 { background: var(--c5); }
+.dot.hollow { background: #fff; border-color: #64748b; box-shadow: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13.5px; margin: 10px 0 6px; }
+.note { color: var(--muted); font-size: 13px; }
+.note a, .sources a { color: var(--accent); }
+.sources { margin: 0; padding-left: 18px; font-size: 13.5px; }
+.sources li { margin: 4px 0; }
+.sources .tag { font-size: 11.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); margin-left: 4px; white-space: nowrap; }
+
+/* MapLibre: controale mai discrete */
+.maplibregl-ctrl-geolocate { display: none !important; }
+.maplibregl-ctrl-bottom-left, .maplibregl-ctrl-bottom-right { margin-bottom: var(--safe-bottom); }
+.maplibregl-ctrl-attrib { font-size: 10.5px; }

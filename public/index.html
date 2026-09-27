@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>GasFind – prețuri carburanți</title>
+  <meta name="description" content="Harta benzinăriilor din Europa cu prețuri la zi din surse oficiale.">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GasFind">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/vendor/maplibre-gl.css">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="map" aria-label="Harta benzinăriilor"></div>
+
+  <header class="topbar">
+    <div class="fuels" role="radiogroup" aria-label="Carburant">
+      <button type="button" class="chip" role="radio" data-fuel="diesel">Motorină</button>
+      <button type="button" class="chip" role="radio" data-fuel="e5">Benzină</button>
+      <button type="button" class="chip" role="radio" data-fuel="e10">E10</button>
+      <button type="button" class="chip" role="radio" data-fuel="e98">98+</button>
+      <button type="button" class="chip" role="radio" data-fuel="lpg">GPL</button>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite" hidden></div>
+  </header>
+
+  <div class="fabs">
+    <button type="button" class="fab" id="btn-info" aria-label="Despre date și legendă">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.2v.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <button type="button" class="fab" id="btn-list" aria-label="Cele mai ieftine din zonă">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10M4 12h7M4 18h4M18 5v14m0 0-3-3m3 3 3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="fab" id="btn-locate" aria-label="Arată locația mea">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+
+  <!-- Fișa benzinăriei selectate -->
+  <section id="card" class="sheet" hidden aria-labelledby="card-title">
+    <button type="button" class="sheet-close" data-close aria-label="Închide">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <h2 id="card-title"></h2>
+    <p class="card-sub" id="card-sub"></p>
+    <div class="prices" id="card-prices"></div>
+    <p class="card-meta" id="card-meta"></p>
+    <a class="nav-btn" id="card-nav" href="#" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4.5 20.3l.7.7L12 18l6.8 3 .7-.7z" fill="currentColor"/></svg>
+      Navighează cu Google Maps
+    </a>
+  </section>
+
+  <!-- Lista celor mai ieftine -->
+  <section id="list" class="sheet sheet-tall" hidden aria-labelledby="list-title">
+    <button type="button" class="sheet-close" data-close aria-label="Închide">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <h2 id="list-title">Cele mai ieftine din zonă</h2>
+    <p class="card-sub" id="list-sub"></p>
+    <ol class="rank" id="list-items"></ol>
+  </section>
+
+  <!-- Despre -->
+  <section id="info" class="sheet sheet-tall" hidden aria-labelledby="info-title">
+    <button type="button" class="sheet-close" data-close aria-label="Închide">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </button>
+    <h2 id="info-title">GasFind</h2>
+    <div class="legend">
+      <span><i class="dot c0"></i>cele mai ieftine</span>
+      <span><i class="dot c2"></i>mediu</span>
+      <span><i class="dot c4"></i>cele mai scumpe</span>
+      <span><i class="dot c5"></i>preț vechi (&gt;7 zile)</span>
+      <span><i class="dot hollow"></i>fără date de preț</span>
+    </div>
+    <p class="note">Culorile compară stațiile vizibile pe hartă pentru carburantul ales. Prețurile sunt pe litru, în moneda țării.</p>
+    <h3>Surse de date</h3>
+    <ul class="sources" id="info-sources"></ul>
+    <p class="note" id="info-extra"></p>
+    <p class="note">Hartă: <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">contribuitorii OpenStreetMap</a>. Prețurile sunt informative; verifică la pompă.</p>
+  </section>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
