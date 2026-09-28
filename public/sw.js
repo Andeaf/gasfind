@@ -1,5 +1,5 @@
 // Service worker: aplicația pornește instant și merge (cu ultimele date văzute) și fără semnal.
-const VERSION = 'gasfind-v3';
+const VERSION = 'gasfind-v4';
 const SHELL = [
   '/', '/index.html', '/app.js', '/styles.css', '/manifest.webmanifest',
   '/vendor/maplibre-gl.mjs', '/vendor/maplibre-gl-shared.mjs', '/vendor/maplibre-gl-worker.mjs', '/vendor/maplibre-gl.css',
@@ -29,7 +29,8 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
 
-  // Date (prețuri): întâi rețeaua, iar fără semnal ultima versiune salvată
+  // Date (prețuri): întâi rețeaua; fără semnal sau când serverul răspunde 5xx (sursa a picat),
+  // ultima copie bună salvată (prețurile își păstrează data, deci se vede cât sunt de vechi)
   if (url.pathname.startsWith('/api/')) {
     e.respondWith((async () => {
       try {
@@ -37,6 +38,11 @@ self.addEventListener('fetch', (e) => {
         if (res.ok) {
           const copy = res.clone();
           e.waitUntil(caches.open(DATA).then((c) => c.put(e.request, copy)).then(trimData));
+          return res;
+        }
+        if (res.status >= 500) {
+          const hit = await caches.match(e.request);
+          if (hit) return hit;
         }
         return res;
       } catch (err) {
