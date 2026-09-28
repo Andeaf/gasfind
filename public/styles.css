@@ -39,6 +39,9 @@ button { font: inherit; color: inherit; }
 .chip[aria-checked="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 .status { margin: 4px auto 0; width: max-content; max-width: calc(100% - 24px); background: var(--chip); color: var(--fg);
   border-radius: 999px; padding: 7px 14px; font-size: 13.5px; box-shadow: var(--shadow); pointer-events: auto; text-align: center; }
+.refband { margin: 4px auto 0; width: max-content; max-width: calc(100% - 24px); background: var(--chip); color: var(--muted);
+  border-radius: 999px; padding: 5px 12px; font-size: 12.5px; box-shadow: var(--shadow); pointer-events: auto; text-align: center; }
+.refband b { color: var(--fg); font-weight: 650; }
 .status .spin { display: inline-block; width: 12px; height: 12px; margin-right: 7px; vertical-align: -1px; border: 2px solid var(--line);
   border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -80,6 +83,8 @@ body.sheet-tall-open .fabs { display: none; }
 .price.old .v { color: var(--muted); }
 .price.old .l::after { content: " (preț vechi)"; color: var(--muted); font-size: 12.5px; }
 .empty { color: var(--muted); font-size: 14px; }
+.ref { color: var(--muted); font-size: 13px; margin: 8px 12px 10px; }
+.ref b { color: var(--fg); }
 
 .nav-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 52px; border-radius: 14px;
   background: var(--accent); color: var(--accent-fg); text-decoration: none; font-weight: 700; font-size: 16.5px; }

@@ -104,6 +104,26 @@ try {
   check('mesaj la zoom mic', /Apropie harta/.test(hint || ''), hint);
   await page.screenshot({ path: `${OUT}/5-zoom-mic.png` });
 
+  // Prețuri de referință: într-o zonă fără sursă de prețuri pe stație (stațiile OSM false sunt „în Ungaria”)
+  await page.evaluate(() => window.__gasfind.map.jumpTo({ center: [21.0, 52.2], zoom: 12 })); // Varșovia: doar OSM (mock)
+  await page.waitForFunction(() => window.__gasfind.state.ref && !window.__gasfind.state.active && !window.__gasfind.state.queue.length && [...window.__gasfind.state.stations.values()].some((s) => s._src === 'osm' && s.lng > 20.5), null, { timeout: 20000 });
+  await page.waitForTimeout(800);
+  const band = await page.evaluate(() => { const el = document.querySelector('#refband'); return el && !el.hidden ? el.textContent : null; });
+  check('banda cu prețul de referință al țării', Boolean(band) && /Ungaria: fără prețuri pe stație · medie motorină/.test(band), band);
+  const osmTarget = await page.evaluate(() => {
+    const s = [...window.__gasfind.state.stations.values()].find((x) => x._src === 'osm' && x.lng > 20.5);
+    return s ? { id: s.id } : null;
+  });
+  if (osmTarget) {
+    await page.evaluate((id) => window.__gasfind.openCard(id), osmTarget.id);
+    await page.waitForSelector('#card:not([hidden])', { timeout: 5000 });
+    await page.waitForTimeout(300);
+    const ref = await page.evaluate(() => document.querySelector('#card-prices .ref')?.textContent || '');
+    check('fișa stației fără preț arată prețul de referință', /Preț de referință: medie națională, motorină .* \(Buletinul petrolier UE, 21\.09\) · prețul la această stație poate diferi/.test(ref), ref);
+    await page.screenshot({ path: `${OUT}/6-referinta.png` });
+    await page.tap('#card [data-close]');
+  } else check('stație OSM de deschis', false, 'nu am găsit stații OSM pe hartă');
+
   const sw = await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await navigator.serviceWorker.ready; const keys = await caches.keys(); return { active: Boolean(r && r.active), caches: keys }; });
   check('service worker activ (aplicație instalabilă, merge offline)', sw.active && sw.caches.some((k) => k.startsWith('gasfind-')), JSON.stringify(sw));
   const manifest = await page.evaluate(async () => (await fetch('/manifest.webmanifest')).json());

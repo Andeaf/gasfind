@@ -19,7 +19,8 @@ const FUEL_LABEL = { diesel: 'Motorină', e5: 'Benzină 95', e10: 'Benzină E10'
 const FUEL_ORDER = ['diesel', 'dp', 'e5', 'e10', 'e98', 'lpg'];
 const CUR_SYMBOL = { EUR: '€', RON: 'lei', MDL: 'MDL', DKK: 'kr', RSD: 'din', MKD: 'den', GBP: '£' };
 const COLORS = ['#15803d', '#4d7c0f', '#b45309', '#c2410c', '#b91c1c', '#6b7280'];
-const SOURCE_NOTE = { ro: 'rețelele mari', at: 'doar cele mai ieftine', osm: 'fără prețuri' };
+const SOURCE_NOTE = { ro: 'rețelele mari', at: 'doar cele mai ieftine', dk: 'marile companii', osm: 'fără prețuri' };
+const COUNTRY = { AT: 'Austria', BE: 'Belgia', BG: 'Bulgaria', HR: 'Croația', CY: 'Cipru', CZ: 'Cehia', DK: 'Danemarca', EE: 'Estonia', FI: 'Finlanda', FR: 'Franța', DE: 'Germania', GR: 'Grecia', HU: 'Ungaria', IE: 'Irlanda', IT: 'Italia', LV: 'Letonia', LT: 'Lituania', LU: 'Luxemburg', MT: 'Malta', NL: 'Țările de Jos', PL: 'Polonia', PT: 'Portugalia', RO: 'România', SK: 'Slovacia', SI: 'Slovenia', ES: 'Spania', SE: 'Suedia', RS: 'Serbia', ME: 'Muntenegru', MK: 'Macedonia de Nord', AL: 'Albania', GB: 'Marea Britanie', CH: 'Elveția', NO: 'Norvegia', MD: 'Moldova', BA: 'Bosnia și Herțegovina', UA: 'Ucraina', XK: 'Kosovo' };
 const params = new URLSearchParams(location.search);
 
 // localStorage poate lipsi (mod privat) -> totul e opțional
@@ -33,6 +34,7 @@ const state = {
   sources: [],
   sourceById: {},
   fx: { EUR: 1, RON: 5.28, MDL: 20.0 },
+  ref: null, // /api/ref: prețuri de referință pe țară (medie UE / maxim legal), doar pentru stațiile fără preț
   stations: new Map(),
   tiles: new Map(),
   fails: new Map(),
@@ -281,6 +283,62 @@ async function loadConfig() {
   }
 }
 
+/** Prețurile de referință pe țară; nu blochează nimic, se reîncearcă peste 10 minute dacă pică. */
+async function loadRef() {
+  try {
+    const res = await fetch('/api/ref');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    state.ref = await res.json();
+    scheduleRender();
+    if (state.selected) openCard(state.selected);
+  } catch {
+    setTimeout(loadRef, 10 * 60000);
+  }
+}
+
+const fmtDay = (iso) => { const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}.${m[2]}` : ''; };
+
+/** Prețul de referință al unei țări pentru carburantul ales (sau primul disponibil). */
+function refPrice(entry, fuel) {
+  const f = entry.p?.[fuel] != null ? fuel : FUEL_ORDER.find((k) => entry.p?.[k] != null);
+  if (!f) return null;
+  const cur = entry.cur || 'EUR';
+  return { fuel: f, v: entry.p[f], cur, eur: cur === 'EUR' ? entry.p[f] : entry.eur?.[f] };
+}
+function fmtRef(rp) {
+  const local = `${fmtPrice(rp.v, rp.cur)} ${CUR_SYMBOL[rp.cur] || rp.cur}/L`;
+  return rp.cur === 'EUR' || rp.eur == null ? local : `${local} (≈ ${fmtPrice(rp.eur, 'EUR')} €/L)`;
+}
+/** Rândul din fișa unei stații fără preț: media națională sau maximul legal, marcat clar că NU e prețul stației. */
+function refLine(cc) {
+  const e = state.ref?.countries?.[cc];
+  const rp = e && refPrice(e, state.fuel);
+  if (!rp) return null;
+  const src = state.ref.sources?.[e.src];
+  const max = e.kind === 'max';
+  return h('p', { class: 'ref' },
+    max ? 'Preț maxim legal: ' : 'Preț de referință: medie națională, ',
+    h('b', {}, `${FUEL_LABEL[rp.fuel].toLowerCase()} ${fmtRef(rp)}`),
+    ` (${src?.short || 'sursă oficială'}, ${fmtDay(e.date)}) · ${max ? 'prețul la această stație poate fi mai mic' : 'prețul la această stație poate diferi'}`);
+}
+/** Banda de sub chip-uri: când stațiile vizibile sunt într-o țară fără prețuri pe stație, dar cu preț de referință. */
+function updateRefBand() {
+  const el = $('#refband');
+  if (!el) return;
+  if (!state.ref || map.getZoom() < MIN_ZOOM) { el.hidden = true; return; }
+  const view = viewBbox(0);
+  const count = new Map();
+  for (const s of state.stations.values()) if (s.cc && inBbox(s, view)) count.set(s.cc, (count.get(s.cc) || 0) + 1);
+  let cc = null, best = 0;
+  for (const [k, n] of count) if (n > best) { cc = k; best = n; }
+  const hasSource = cc && state.sources.some((src) => src.cc === cc);
+  const e = cc && !hasSource ? state.ref.countries?.[cc] : null;
+  const rp = e && refPrice(e, state.fuel);
+  if (!rp) { el.hidden = true; return; }
+  el.replaceChildren(`${COUNTRY[cc] || cc}: fără prețuri pe stație · ${e.kind === 'max' ? 'maxim legal' : 'medie'} ${FUEL_LABEL[rp.fuel].toLowerCase()} `, h('b', {}, fmtRef(rp)), ` (${fmtDay(e.date)})`);
+  el.hidden = false;
+}
+
 function planTiles() {
   if (map.getZoom() < MIN_ZOOM) return [];
   const view = viewBbox(0.2);
@@ -475,6 +533,7 @@ function render() {
     features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [s.lng, s.lat] }, properties: props });
   }
   src.setData({ type: 'FeatureCollection', features });
+  updateRefBand();
   if (!$('#list').hidden) renderList();
 }
 
@@ -570,8 +629,10 @@ function openCard(id) {
     box.replaceChildren(h('p', { class: 'empty' }, s._src === 'osm' && s.cc === 'DE' && state.sourceById.de
       ? 'Prețurile din Germania sosesc treptat, o zonă pe minut (limita Tankerkönig). Stația apare deocamdată din OpenStreetMap.'
       : s._src === 'osm'
-        ? 'Nu există o sursă gratuită de prețuri pentru această țară. Stația apare din OpenStreetMap.'
+        ? 'Nu există o sursă gratuită de prețuri pe stație pentru această țară. Stația apare din OpenStreetMap.'
         : 'Sursa nu a publicat prețuri pentru această stație (de ex. în Austria doar cele mai ieftine au preț).'));
+    const rl = s.cc && refLine(s.cc);
+    if (rl) box.append(rl);
   } else {
     box.replaceChildren(...fuels.map((f) => {
       const stale = isStale(s, f);
@@ -587,6 +648,7 @@ function openCard(id) {
   const t = priceTime(s, s.p?.[state.fuel] != null ? state.fuel : fuels[0]);
   if (t && fuels.length) meta.push(s.uf ? `Verificat ${ago(t)}` : `Preț actualizat ${ago(t)}`);
   if (s.open === false) meta.push('Închisă acum');
+  if (s.x?.off) meta.push('prețul poate fi neactualizat (stația nu raportează în timp real)');
   if (s.x?.self) meta.push('preț self-service');
   if (s.x?.hw) meta.push('autostradă');
   if (s.x?.hours && s.x.hours.length < 60) meta.push(s.x.hours);
@@ -643,8 +705,10 @@ function openInfo() {
     SOURCE_NOTE[s.id] ? h('span', { class: 'tag' }, SOURCE_NOTE[s.id]) : null)));
   const extra = [];
   if (state.deMissingKey) extra.push('Germania: prețurile apar după ce adaugi cheia gratuită Tankerkönig (vezi README).');
-  extra.push('Fără prețuri (doar benzinăriile din OpenStreetMap): Ungaria, Bulgaria, Grecia, Polonia, Cehia, Slovacia, Olanda, Belgia, Luxemburg, Elveția, Marea Britanie, țările nordice și baltice etc. – nu există surse gratuite de prețuri pe stație.');
+  extra.push('În țările fără sursă de prețuri pe stație (Ungaria, Bulgaria, Grecia, Polonia, Cehia, Slovacia, Țările de Jos, Belgia, Luxemburg, Elveția, Marea Britanie, țările nordice și baltice etc.) benzinăriile apar din OpenStreetMap, iar fișa lor arată prețul de referință al țării: media națională sau, unde există, prețul maxim legal. Acesta nu e prețul stației.');
   $('#info-extra').textContent = extra.join(' ');
+  const refs = Object.values(state.ref?.sources || {});
+  $('#info-ref').replaceChildren(...(refs.length ? ['Prețuri de referință: ', ...refs.flatMap((r, i) => [i ? ' · ' : null, r.url ? h('a', { href: r.url, target: '_blank', rel: 'noopener' }, r.name) : r.name])] : []));
   openSheet('info');
 }
 
@@ -702,6 +766,7 @@ updateStatus();
 const configReady = loadConfig();
 map.on('load', async () => {
   await configReady;
+  loadRef();
   update();
   // prima deschidere (sau permisiune deja dată): centrăm pe utilizator
   let granted = false;
@@ -714,4 +779,4 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 }
 
 // pentru teste
-window.__gasfind = { state, map, render, update };
+window.__gasfind = { state, map, render, update, openCard };
