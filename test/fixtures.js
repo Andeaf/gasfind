@@ -192,3 +192,178 @@ export const DK_OIL_NOPRICE = [{"station_id":4500250,"station_name":"OIL! tank &
 export const DK_CK = {"sites":[{"id":"10103","name":"CIRCLE K HASSERIS","address":{"street":"Hasseris Bymidte 2","city":"Aalborg","state":"Aalborg Kommune","postalCode":"9000","country":"DK"},"fuelPrices":[{"code":"1030921","displayName":"miles 95","price":18.19,"currency":"DKK","volumeUnit":"LITER","lastUpdated":"2026-09-25T08:59:00.700Z"},{"code":"1030928","displayName":"miles diesel","price":19.29,"currency":"DKK","volumeUnit":"LITER","lastUpdated":"2026-09-25T08:59:00.700Z"},{"code":"1030876","displayName":"miles+ diesel","price":20.19,"currency":"DKK","volumeUnit":"LITER","lastUpdated":"2026-09-25T08:59:00.700Z"},{"code":"1030941","displayName":"miles+ 95","price":19.09,"currency":"DKK","volumeUnit":"LITER","lastUpdated":"2026-09-25T08:59:00.700Z"}]},{"id":"10107","name":"INGO BYLDERUP-BOV","address":{"street":"Bygaden 29","city":"Bylderup-Bov","state":"Aabenraa Kommune","postalCode":"6372","country":"DK"},"fuelPrices":[{"code":"592327","displayName":"Benzin 95","price":18.09,"currency":"DKK","volumeUnit":"LITER","lastUpdated":"2026-09-25T09:04:40.746Z"},{"code":"797325","displayName":"Diesel","price":19.19,"currency":"DKK","volumeUnit":"LITER","lastUpdated":"2026-09-25T09:04:40.746Z"},{"code":"1030971","displayName":"UPGRADE 95","price":18.78,"currency":"DKK","volumeUnit":"LITER","lastUpdated":"2026-09-25T09:04:40.746Z"}]}]};
 // coordonatele acestor stații din lib/data/dk-sites.js (geocodate cu DAWA)
 export const DK_SITES = {"q8:8001":[55.063482,10.606397],"q8:8003":[55.78226,12.484487],"ck:10103":[57.036734,9.884071],"ck:10107":[54.895508,9.089078]};
+
+// Cipru: pagina GET a observatorului (formular + token) și tabelul POST (Αμόλυβδη 95), rânduri reale din 27 sept. 2026
+export const CY_GET = `<html><body><form action="/MCIT/MCIT/PetroleumPrices" method="post"><input name="__RequestVerificationToken" type="hidden" value="TOKEN-DIN-FORMULAR" />        <div class="form-horizontal">
+            <!-- 
+            <div class="form-group">
+                <div class="col-md-12">
+                    <label class="note-requiredfields">Τα πεδία που σημειώνονται με αστερίσκο (*) είναι υποχρεωτικά.</label>
+                </div>
+            </div> Note_RequiredFields 
+            -->
+
+            <div class="form-group">
+                <label class="control-label control-label-left col-md-3 required" for="Entity_PetroleumType">Είδος Καυσίμου</label>
+                <div class="col-md-8">
+                    <select class="form-control petroleumType select-css" data-val="true" data-val-number="The field Είδος Καυσίμου must be a number." data-val-required="Το πεδίο είναι υποχρεωτικό." id="Entity_PetroleumType" name="Entity.PetroleumType"><option value="">-- Select --</option>
+<option value="1">Αμόλυβδη 95</option>
+<option value="2">Αμόλυβδη 98</option>
+<option value="5">Κηροζίνη</option>
+<option value="4">Πετρέλαιο Θέρμανσης</option>
+<option value="3">Πετρέλαιο κίνησης</option>
+</select>
+                    <span class="field-validation-valid" data-valmsg-for="Entity.PetroleumType" data-valmsg-replace="true"></span>
+                </div>
+            </div> <!-- Entity.PetroleumType -->
+
+            <div class="form-group">
+                <label class="control-label control-label-left col-md-3" for="Entity_StationCityEnum">Επαρχία</label>
+                <div class="col-md-8">
+                    <select class="form-control city select-css" id="Entity_StationCityEnum" name="Entity.StationCityEnum"><option selected="selected" value="All">Όλες</option>
+<option value="Famagusta">Αμμόχωστος</option>
+<option value="Larnaca">Λάρνακα</option>
+<option value="Limassol">Λεμεσός</option>
+<option value="Nicosia">Λευκωσία</option>
+<option value="Paphos">Πάφος</option>
+</select>
+                    <span class="field-validation-valid" data-valmsg-for="Entity.StationCityEnum" data-valmsg-replace="true"></span>
+                </div>
+            </div> <!-- Entity.StationCityEnum -->
+
+            <div class="form-group">
+                <div class="col-md-3">
+                    <label class="control-label control-label-left" for="Entity_District">Επιλογή Περιοχών (Δυνατότητα επιλογής πολλαπλών περιοχών)</label>
+                    
+                </div>
+                <div class="col-md-8">
+                    <select class="form-control districts" id="Entity_District" multiple="" name="Entity.District"></select>
+                    
+                    
+                    <span class="field-validation-valid" data-valmsg-for="Entity.District" data-valmsg-replace="true"></span>
+                </div>
+            </div>
+
+            <div class="form-group" style="display: none">
+                <label class="control-label control-label-left col-md-3">Επιλεγμένες Περιοχές</label>
+                <div class="col-md-8">
+                    <textarea class="form-control stationDistrict" cols="20" hidden="hidden" id="Entity_StationDistrict" name="Entity.StationDistrict" readonly="readonly" rows="5">
+</textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-3 col-sm-3">
+                    <label class="control-label"></label>
+                </div>
+
+                <div class="col-md-8 col-sm-8">
+                    <button type="submit" style="width: 100%">Submit</button>
+                </div>
+            </div>
+        </div>
+</form></body></html>`;
+export const CY_POST_95 = `<html><body><div>Μέση Τιμή σε € (Παγκύπρια) 1.726</div><table id="petroleumPriceDetailsFootable" class="table"><thead>
+                <tr>
+                    <th data-name="companyName" class="fooicon fooicon-sort"><b>Σήμα</b></th>
+                    <th data-name="stationName" data-breakpoints="xs"><b>Πρατήριο</b></th>
+                    <th data-name="address" class="fooicon" data-sortable="false"><b>Διεύθυνση</b></th>  
+                    <th data-name="district" class="fooicon" data-breakpoints="xs sm" data-sortable="false"><b>Περιοχή/Χωριό</b></th>
+                    <th data-name="price" class="fooicon fooicon-sort"><b>Τιμή</b></th>
+                </tr>
+                </thead><tbody>
+<tr>
+                            <td class="">ESSO</td>
+                            <td class="">	I.G. MAKRIS ENTERPRISES LTD</td>
+                            <td class="">
+<a class="multiLine normalFontWeight" data-ajax="false" href="/MCIT/MCIT/PetroleumPrices/DisplayMap?coordinates=35.1845138888889%2C33.3895" target="_blank">Καντάρας 58 Τ.Κ 1037
+ τηλ: 22433430</a>                            </td>
+                            <td class="">Καϊμακλί</td>
+                            <td class="">1.717</td>
+                        </tr>
+<tr>
+                            <td class="">PETROLINA</td>
+                            <td class="">	MICHALIS KNEKNAS TRADING LTD</td>
+                            <td class="">
+<a class="multiLine normalFontWeight" data-ajax="false" href="/MCIT/MCIT/PetroleumPrices/DisplayMap?coordinates=35.148666%2C33.212235" target="_blank">Γρηγόρη Αυξεντίου 76, Κοκκινοτριμιθιά Τ.Κ 2660
+ τηλ: 22834160</a>                            </td>
+                            <td class="">Κοκκινοτριμιθιά</td>
+                            <td class="">1.695</td>
+                        </tr>
+<tr>
+                            <td class="isOffLine">FILL N GO</td>
+                            <td class="isOffLine">FILL N GO STATIONS LTD</td>
+                            <td class="isOffLine">
+<a class="multiLine normalFontWeight" data-ajax="false" href="/MCIT/MCIT/PetroleumPrices/DisplayMap?coordinates=34.92639%2C%2033.44032" target="_blank">Λεωφ. Λάρνακος 1 Τ.Κ 7648
+ τηλ: 22532828</a>                            </td>
+                            <td class="isOffLine">Πυργά</td>
+                            <td class="isOffLine">1.669</td>
+                        </tr>
+<tr>
+                            <td class="">ΑΝΕΞΑΡΤΗΤΟ ΠΡΑΤΗΡΙΟ</td>
+                            <td class="">ARTEMIS A. GEORGIOU PETROL STATION LTD</td>
+                            <td class="">
+<a class="multiLine normalFontWeight" data-ajax="false" href="/MCIT/MCIT/PetroleumPrices/DisplayMap?coordinates=34%C2%B039%2713.5%22N%2032%C2%B058%2726.3%22E" target="_blank">Λεωφ. Κωνσταντίνου &amp; Ευριπίδου 1 Τ.Κ 4651
+ τηλ: 25873040</a>                            </td>
+                            <td class="">Τραχώνι</td>
+                            <td class="">1.747</td>
+                        </tr>
+<tr>
+                            <td class="">JACKOSON</td>
+                            <td class="">JACKOSON ENTERPRISES LIMITED</td>
+                            <td class="">
+Δρόμος Παλαιχωρίου - Αγρού Τ.Κ 4860                             </td>
+                            <td class="">Αγρός</td>
+                            <td class="">1.707</td>
+                        </tr>
+</tbody></table></body></html>`;
+export const CY_POST_DIESEL = `<html><body><div>Μέση Τιμή σε € (Παγκύπρια) 1.726</div><table id="petroleumPriceDetailsFootable" class="table"><thead>
+                <tr>
+                    <th data-name="companyName" class="fooicon fooicon-sort"><b>Σήμα</b></th>
+                    <th data-name="stationName" data-breakpoints="xs"><b>Πρατήριο</b></th>
+                    <th data-name="address" class="fooicon" data-sortable="false"><b>Διεύθυνση</b></th>  
+                    <th data-name="district" class="fooicon" data-breakpoints="xs sm" data-sortable="false"><b>Περιοχή/Χωριό</b></th>
+                    <th data-name="price" class="fooicon fooicon-sort"><b>Τιμή</b></th>
+                </tr>
+                </thead><tbody>
+<tr>
+                            <td class="">ESSO</td>
+                            <td class="">	I.G. MAKRIS ENTERPRISES LTD</td>
+                            <td class="">
+<a class="multiLine normalFontWeight" data-ajax="false" href="/MCIT/MCIT/PetroleumPrices/DisplayMap?coordinates=35.1845138888889%2C33.3895" target="_blank">Καντάρας 58 Τ.Κ 1037
+ τηλ: 22433430</a>                            </td>
+                            <td class="">Καϊμακλί</td>
+                            <td class="">1.767</td> </tr>
+<tr>
+                            <td class="">PETROLINA</td>
+                            <td class="">	MICHALIS KNEKNAS TRADING LTD</td>
+                            <td class="">
+<a class="multiLine normalFontWeight" data-ajax="false" href="/MCIT/MCIT/PetroleumPrices/DisplayMap?coordinates=35.148666%2C33.212235" target="_blank">Γρηγόρη Αυξεντίου 76, Κοκκινοτριμιθιά Τ.Κ 2660
+ τηλ: 22834160</a>                            </td>
+                            <td class="">Κοκκινοτριμιθιά</td>
+                            <td class="">1.745</td> </tr>
+<tr>
+                            <td class="isOffLine">FILL N GO</td>
+                            <td class="isOffLine">FILL N GO STATIONS LTD</td>
+                            <td class="isOffLine">
+<a class="multiLine normalFontWeight" data-ajax="false" href="/MCIT/MCIT/PetroleumPrices/DisplayMap?coordinates=34.92639%2C%2033.44032" target="_blank">Λεωφ. Λάρνακος 1 Τ.Κ 7648
+ τηλ: 22532828</a>                            </td>
+                            <td class="isOffLine">Πυργά</td>
+                            <td class="isOffLine">1.719</td> </tr>
+<tr>
+                            <td class="">ΑΝΕΞΑΡΤΗΤΟ ΠΡΑΤΗΡΙΟ</td>
+                            <td class="">ARTEMIS A. GEORGIOU PETROL STATION LTD</td>
+                            <td class="">
+<a class="multiLine normalFontWeight" data-ajax="false" href="/MCIT/MCIT/PetroleumPrices/DisplayMap?coordinates=34%C2%B039%2713.5%22N%2032%C2%B058%2726.3%22E" target="_blank">Λεωφ. Κωνσταντίνου &amp; Ευριπίδου 1 Τ.Κ 4651
+ τηλ: 25873040</a>                            </td>
+                            <td class="">Τραχώνι</td>
+                            <td class="">1.797</td> </tr>
+<tr>
+                            <td class="">JACKOSON</td>
+                            <td class="">JACKOSON ENTERPRISES LIMITED</td>
+                            <td class="">
+Δρόμος Παλαιχωρίου - Αγρού Τ.Κ 4860                             </td>
+                            <td class="">Αγρός</td>
+                            <td class="">1.757</td> </tr>
+</tbody></table></body></html>`;
+export const CY_SET_COOKIE = 'ASP.NET_SessionId_Efef=sesiune-de-test; path=/; HttpOnly; SameSite=Lax, __RequestVerificationToken=TOKEN-COOKIE-DE-TEST; path=/; HttpOnly';
