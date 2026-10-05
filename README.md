@@ -63,6 +63,8 @@ Varianta fără linie de comandă:
 2. Pe vercel.com, alege **Add New → Project** și importă repository-ul.
 3. Apasă **Deploy**. Setările sunt deja în `vercel.json`.
 
+Proiectul acesta e legat de repository-ul GitHub `Andeaf/gasfind`: fiecare push pe ramura `main` publică automat o nouă versiune în producție, iar push-urile pe alte ramuri creează versiuni de previzualizare.
+
 ## 2. Germania: cheia Tankerkönig (gratuită)
 
 1. Cere cheia pe https://onboarding.tankerkoenig.de (nume și email). O primești pe email după ce confirmi adresa.
