@@ -145,8 +145,9 @@ async function main() {
     const t0 = Date.now();
     try {
       const list = parse(await download(cc));
-      // 0 stații într-o țară care avea stații = aproape sigur o eroare a serverului, nu realitatea
-      if (!list.length && prev?.n > 0) throw new Error('0 stații (copia anterioară avea ' + prev.n + ')');
+      // 0 stații într-o țară întreagă = eroare a serverului (zona țării lipsește sau e incompletă pe acel
+      // server), nu realitatea: chiar Vaticanul are o stație. 12.10.2026: LV a venit gol după 739 s.
+      if (!list.length) throw new Error(`0 stații${prev?.n ? ` (copia anterioară avea ${prev.n})` : ''}`);
       byCountry.set(cc, list);
       countries[cc] = { n: list.length, date: now };
       console.log(`${cc}: ${list.length} stații (${((Date.now() - t0) / 1000).toFixed(0)} s)`);

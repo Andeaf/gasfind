@@ -53,10 +53,21 @@ jobs:
           git add lib/data/osm
           if git diff --cached --quiet; then echo "Nicio schimbare."; exit 0; fi
           day=$(node -p "require('./lib/data/osm/index.json').generated.slice(0, 10)")
-          git -c user.name="Andeaf" -c user.email="241165819+Andeaf@users.noreply.github.com" commit -q -m "OSM: copia săptămânală a benzinăriilor ($day)"
+          # în config, nu cu -c: și git pull --rebase creează commit-uri
+          git config user.name "Andeaf"
+          git config user.email "241165819+Andeaf@users.noreply.github.com"
+          git commit -q -m "OSM: copia săptămânală a benzinăriilor ($day)"
           git pull -q --rebase origin main
           git push -q origin HEAD:main
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Copia ca artefact (dacă un pas de după descărcare a picat)
+        if: ${{ failure() && hashFiles('lib/data/osm/index.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: osm-${{ github.run_id }}
+          path: lib/data/osm
+          retention-days: 7
 
       - name: Țări nedescărcate
         if: ${{ !cancelled() && steps.commit.conclusion == 'success' }}
