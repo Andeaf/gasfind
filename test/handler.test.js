@@ -5,6 +5,10 @@ import { setTransport, clearMemo } from '../lib/http.js';
 import { handleTile, handleConfig, handleDetail } from '../lib/handler.js';
 import { resetRateGate } from '../lib/sources/de.js';
 import { splitBbox, bboxCenter } from '../lib/geo.js';
+import { setDataDir } from '../lib/sources/osm.js';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const P = (o) => new URLSearchParams(o);
 let restore = () => {};
@@ -150,6 +154,7 @@ test('tile Italia: 4 cereri POST pe zonă, rază ≤ 10 km', async () => {
 });
 
 test('tile OSM: nicio cerere Overpass pentru dale din țări complete', async () => {
+  setDataDir(mkdtempSync(join(tmpdir(), 'gf-osm-'))); // fără copia săptămânală: doar Overpass
   const calls = mock(() => ok(F.OSM_JSON));
   const paris = await handleTile(P({ s: 'osm', x: Math.floor(2.3 / 0.25), y: Math.floor(48.8 / 0.25) }), {});
   assert.equal(paris.status, 200);

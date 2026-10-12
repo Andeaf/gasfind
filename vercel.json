@@ -6,7 +6,17 @@
     "fra1"
   ],
   "functions": {
-    "api/*.js": {
+    "api/tile.js": {
+      "maxDuration": 60,
+      "includeFiles": "lib/data/osm/**"
+    },
+    "api/config.js": {
+      "maxDuration": 60
+    },
+    "api/detail.js": {
+      "maxDuration": 60
+    },
+    "api/ref.js": {
       "maxDuration": 60
     }
   },

@@ -1,0 +1,62 @@
+# Copia săptămânală OpenStreetMap: descarcă benzinăriile (amenity=fuel) din Overpass țară cu țară
+# (scripts/build-osm.js), verifică datele și face commit pe main; Vercel publică automat la push.
+# Commit-ul are ca autor contul proprietarului: pe planul Hobby, Vercel nu publică dintr-un repo privat
+# commit-uri ale altor autori (inclusiv github-actions[bot]).
+# Dacă o țară nu răspunde, rămâne pe copia anterioară, iar ultimul pas pică (GitHub trimite email).
+name: OSM săptămânal
+
+on:
+  schedule:
+    - cron: '23 1 * * 1' # luni, 01:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: osm
+  cancel-in-progress: false
+
+jobs:
+  osm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Descarcă din Overpass, țară cu țară
+        run: node scripts/build-osm.js
+
+      - name: Teste
+        run: npm test
+
+      - name: Copia se citește fără rețea (Budapesta)
+        run: |
+          node --input-type=module -e "
+            import { setTransport } from './lib/http.js';
+            import { handleTile } from './lib/handler.js';
+            setTransport(async () => { throw new Error('fără rețea'); });
+            const b = JSON.parse((await handleTile(new URLSearchParams({ s: 'osm', x: '76', y: '190' }), {})).body);
+            if (!b.stations?.length || !b.snapshot) { console.error(b); process.exit(1); }
+            console.log('Budapesta:', b.stations.length, 'stații din copia', b.snapshot);
+          "
+
+      - name: Commit pe main
+        run: |
+          git add lib/data/osm
+          if git diff --cached --quiet; then echo "Nicio schimbare."; exit 0; fi
+          day=$(node -p "require('./lib/data/osm/index.json').generated.slice(0, 10)")
+          git -c user.name="Andeaf" -c user.email="241165819+Andeaf@users.noreply.github.com" commit -q -m "OSM: copia săptămânală a benzinăriilor ($day)"
+          git pull -q --rebase origin main
+          git push -q origin HEAD:main
+
+      - name: Țări nedescărcate
+        run: |
+          node -e "
+            const f = require('./lib/data/osm/index.json').failed || [];
+            if (f.length) { console.error('Au rămas pe copia anterioară: ' + f.join(', ')); process.exit(1); }
+            console.log('Toate țările au fost descărcate.');
+          "
