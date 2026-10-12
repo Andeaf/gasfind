@@ -641,6 +641,10 @@ function openCard(id) {
   state.selected = id;
   showSelection();
   $('#card-title').textContent = stationTitle(s);
+  // Cipru: firma care operează stația (titlul e „marcă · localitate”)
+  const op = $('#card-op');
+  op.textContent = s.x?.op || '';
+  op.hidden = !s.x?.op;
   const where = [s.addr, s.city].filter(Boolean).join(', ');
   const dist = state.user ? fmtKm(distKm(state.user, s)) : null;
   $('#card-sub').textContent = [where, dist && `la ${dist}`].filter(Boolean).join(' · ') || ' ';

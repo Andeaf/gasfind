@@ -32,7 +32,13 @@ test('Cipru: tabelul observatorului -> stații cu coordonate (zecimale sau DMS),
   assert.equal(st[0].id, 'cy:' + rows[0].id);
   assert.deepEqual(st[0].p, { e5: 1.717, diesel: 1.767 });
   assert.equal(st[0].uf, true);
-  assert.deepEqual(st[2].x, { off: true });
+  // titlul fișei: marcă · localitate; firma care operează stația e în x.op
+  assert.equal(st[0].brand, 'ESSO');
+  assert.equal(st[0].name, 'Καϊμακλί');
+  assert.equal(st[0].city, 'Καϊμακλί');
+  assert.equal(st[0].x.op, 'I.G. MAKRIS ENTERPRISES LTD');
+  assert.equal(st[2].x.off, true);
+  assert.ok(st[2].x.op);
 });
 
 test('Cipru: GET pentru cookie + token, câte un POST per carburant, o descărcare pentru toate dalele', async () => {
@@ -48,17 +54,20 @@ test('Cipru: GET pentru cookie + token, câte un POST per carburant, o descărca
     posts.push(body.get('Entity.PetroleumType'));
     return { status: 200, text: body.get('Entity.PetroleumType') === '3' ? F.CY_POST_DIESEL : F.CY_POST_95, headers: {} };
   });
-  // Nicosia: x=111, y=175 -> [33.3, 35, 33.6, 35.2]
-  const a = await handleTile(P({ s: 'cy', x: 111, y: 175 }), {});
+  // toată insula e o singură dală: x=5, y=5 -> [30, 30, 36, 36]
+  const a = await handleTile(P({ s: 'cy', x: 5, y: 5 }), {});
   assert.equal(a.status, 200);
-  const st = JSON.parse(a.body).stations;
+  const body = JSON.parse(a.body);
+  const st = body.stations;
+  assert.deepEqual(body.bbox, [30, 30, 36, 36]);
   assert.deepEqual([...posts].sort(), ['1', '2', '3'], 'câte un POST per carburant (sesiuni paralele)');
+  assert.equal(st.length, 4, 'toate stațiile din fixture, inclusiv Pyrga și cea offline');
   assert.ok(st.some((s) => s.brand === 'ESSO' && s.p.e5 === 1.717 && s.p.diesel === 1.767));
   assert.ok(st.every((s) => s.cc === 'CY' && s.cur === 'EUR'));
+  assert.ok(st.some((s) => s.x?.off === true), 'stația offline e marcată');
   assert.match(a.headers['Cache-Control'], /s-maxage=1800/);
-  const b = await handleTile(P({ s: 'cy', x: 111, y: 174 }), {}); // Pyrga: [33.3, 34.8, 33.6, 35]
-  assert.equal(posts.length, 3, 'a doua dală vine din memo');
-  assert.ok(JSON.parse(b.body).stations.some((s) => s.x?.off === true), 'stația offline e marcată');
+  await handleTile(P({ s: 'cy', x: 5, y: 5 }), {});
+  assert.equal(posts.length, 3, 'a doua cerere vine din memo');
   const far = await handleTile(P({ s: 'cy', x: 200, y: 200 }), {});
   assert.deepEqual(JSON.parse(far.body).stations, [], 'în afara acoperirii: gol, fără cereri');
 });

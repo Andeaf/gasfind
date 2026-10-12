@@ -67,6 +67,7 @@ body.sheet-tall-open .fabs { display: none; }
 .sheet h3 { margin: 16px 0 6px; font-size: 15px; }
 .sheet-close { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border: 0; background: transparent; border-radius: 50%; cursor: pointer; display: grid; place-items: center; color: var(--muted); }
 .sheet-close svg { width: 22px; height: 22px; }
+.card-op { margin: 0 0 2px; font-size: 14px; }
 .card-sub { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
 .card-meta { margin: 10px 0 14px; color: var(--muted); font-size: 13px; }
 

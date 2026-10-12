@@ -124,6 +124,23 @@ try {
     await page.tap('#card [data-close]');
   } else check('stație OSM de deschis', false, 'nu am găsit stații OSM pe hartă');
 
+  // Cipru: titlul e „marcă · localitate”, firma care operează stația e pe rândul de dedesubt
+  const cy = await page.evaluate(() => {
+    const g = window.__gasfind;
+    const c = g.map.getCenter();
+    g.state.stations.set('cy:test', { id: 'cy:test', lat: c.lat, lng: c.lng, brand: 'ESSO', name: 'Καϊμακλί', addr: 'Καντάρας 58', city: 'Καϊμακλί', cc: 'CY', cur: 'EUR', p: { diesel: 1.5 }, u: new Date().toISOString(), uf: true, x: { op: 'I.G. MAKRIS ENTERPRISES LTD' }, _src: 'cy' });
+    g.openCard('cy:test');
+    const op = document.querySelector('#card-op');
+    const out = { title: document.querySelector('#card-title').textContent, op: op.hidden ? null : op.textContent };
+    g.state.stations.delete('cy:test');
+    return out;
+  });
+  check('Cipru: marca și localitatea în titlu, firma dedesubt', cy.title === 'ESSO · Καϊμακλί' && cy.op === 'I.G. MAKRIS ENTERPRISES LTD', JSON.stringify(cy));
+  await page.tap('#card [data-close]');
+  const opHidden = await page.evaluate(() => { const g = window.__gasfind; const id = [...g.state.stations.keys()].find((k) => k.startsWith('ro:')); g.openCard(id); return document.querySelector('#card-op').hidden; });
+  check('rândul firmei e ascuns la celelalte stații', opHidden === true);
+  await page.tap('#card [data-close]');
+
   const sw = await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await navigator.serviceWorker.ready; const keys = await caches.keys(); return { active: Boolean(r && r.active), caches: keys }; });
   check('service worker activ (aplicație instalabilă, merge offline)', sw.active && sw.caches.some((k) => k.startsWith('gasfind-')), JSON.stringify(sw));
   const manifest = await page.evaluate(async () => (await fetch('/manifest.webmanifest')).json());
