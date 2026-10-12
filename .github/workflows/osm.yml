@@ -2,7 +2,9 @@
 # (scripts/build-osm.js), verifică datele și face commit pe main; Vercel publică automat la push.
 # Commit-ul are ca autor contul proprietarului: pe planul Hobby, Vercel nu publică dintr-un repo privat
 # commit-uri ale altor autori (inclusiv github-actions[bot]).
-# Dacă o țară nu răspunde, rămâne pe copia anterioară, iar ultimul pas pică (GitHub trimite email).
+# Dacă o țară nu răspunde, rămâne pe copia anterioară, iar pasul „Țări nedescărcate” pică (GitHub trimite email).
+# Ultimul pas așteaptă publicarea pe Vercel a commit-ului și pică dacă ea eșuează (ex. 12.10.2026: GitHub a
+# refuzat cererile Vercel cu „secondary rate limit”, iar deploy-ul a trebuit repornit).
 name: OSM săptămânal
 
 on:
@@ -12,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  statuses: read
 
 concurrency:
   group: osm
@@ -45,6 +48,7 @@ jobs:
           "
 
       - name: Commit pe main
+        id: commit
         run: |
           git add lib/data/osm
           if git diff --cached --quiet; then echo "Nicio schimbare."; exit 0; fi
@@ -52,11 +56,31 @@ jobs:
           git -c user.name="Andeaf" -c user.email="241165819+Andeaf@users.noreply.github.com" commit -q -m "OSM: copia săptămânală a benzinăriilor ($day)"
           git pull -q --rebase origin main
           git push -q origin HEAD:main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Țări nedescărcate
+        if: ${{ !cancelled() && steps.commit.conclusion == 'success' }}
         run: |
           node -e "
             const f = require('./lib/data/osm/index.json').failed || [];
             if (f.length) { console.error('Au rămas pe copia anterioară: ' + f.join(', ')); process.exit(1); }
             console.log('Toate țările au fost descărcate.');
           "
+
+      - name: Publicarea pe Vercel
+        if: ${{ !cancelled() && steps.commit.outputs.sha != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          for i in $(seq 1 60); do
+            st=$(gh api "repos/${{ github.repository }}/commits/$SHA/status" --jq '[.statuses[] | select(.context == "Vercel") | .state][0] // "pending"')
+            echo "Vercel: $st"
+            case "$st" in
+              success) exit 0 ;;
+              failure|error) echo "::error::Publicarea pe Vercel a eșuat pentru $SHA. Repornește-o din Vercel (Deployments → Redeploy) sau cu un push nou."; exit 1 ;;
+            esac
+            sleep 15
+          done
+          echo "::error::Vercel nu a raportat starea publicării în 15 minute."
+          exit 1
