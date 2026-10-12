@@ -1,0 +1,25 @@
+# Verificarea săptămânală a producției (scripts/check-prod.js): câte o cerere pe sursă cu un parametru
+# anti-cache, plus /api/ref. Pică dacă o sursă nu răspunde, nu are stații sau are date vechi, ori dacă
+# /api/ref nu conține țările așteptate; GitHub trimite atunci email. Germania e sărită (Tankerkönig
+# permite cereri doar la acțiunea unui utilizator).
+name: Verificare producție
+
+on:
+  schedule:
+    - cron: '17 6 * * 1' # luni, 06:17 UTC (după copia OSM)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verificare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Verifică https://gasfind-three.vercel.app
+        run: node scripts/check-prod.js https://gasfind-three.vercel.app
