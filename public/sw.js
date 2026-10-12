@@ -1,5 +1,5 @@
 // Service worker: aplicația pornește instant și merge (cu ultimele date văzute) și fără semnal.
-const VERSION = 'gasfind-v4';
+const VERSION = 'gasfind-v5';
 const SHELL = [
   '/', '/index.html', '/app.js', '/styles.css', '/manifest.webmanifest',
   '/vendor/maplibre-gl.mjs', '/vendor/maplibre-gl-shared.mjs', '/vendor/maplibre-gl-worker.mjs', '/vendor/maplibre-gl.css',

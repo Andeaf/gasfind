@@ -11,6 +11,17 @@ const OSM_MAX_PARALLEL = 2; // din acestea, cel mult atâtea pentru OSM (lent, f
 // 61 s între două cereri care ajung la Tankerkönig (un răspuns din cache-ul CDN nu consumă din limită).
 const DE_MIN_INTERVAL_MS = 61000;
 const STALE_DAYS = 7; // prețurile mai vechi sunt afișate gri
+// O dală descărcată de server de mai mult de 2×TTL e afișată, dar cerută din nou după 5 s și, dacă tot e
+// veche, după încă 20 s. Copia veche vine de obicei din service worker (când serverul răspunde 5xx sau nu e
+// semnal, sw.js întoarce ultima copie salvată, oricât de veche) sau din CDN: Vercel servește o copie expirată
+// („STALE”) până la s-maxage + stale-while-revalidate (3×TTL; măsurat) și o reîmprospătează în fundal, deci
+// a doua cerere primește copia nouă. CDN-ul ignoră Pragma / Cache-Control din cerere (măsurat);
+// cache: 'reload' ocolește doar cache-ul browserului.
+const OLD_FACTOR = 2;
+const REVAL_DELAYS = [5000, 20000];
+const RELOAD = { cache: 'reload' };
+const REF_TTL = 4 * 3600; // s-maxage pentru /api/ref
+const isOld = (fetched, ttl) => Date.now() - Date.parse(fetched) > OLD_FACTOR * ttl * 1000;
 // O stație OSM (fără preț) e considerată dublura uneia cu preț dacă e la < 80 m de ea,
 // sau la < 300 m și are aceeași marcă (coordonatele surselor oficiale sunt uneori aproximative).
 const DEDUPE_NEAR_M = 80;
@@ -38,6 +49,7 @@ const state = {
   stations: new Map(),
   tiles: new Map(),
   fails: new Map(),
+  revals: new Map(), // dală -> de câte ori am cerut-o din nou pentru că era veche
   queue: [],
   active: 0,
   activeOsm: 0,
@@ -284,13 +296,14 @@ async function loadConfig() {
 }
 
 /** Prețurile de referință pe țară; nu blochează nimic, se reîncearcă peste 10 minute dacă pică. */
-async function loadRef() {
+async function loadRef(reval = false) {
   try {
-    const res = await fetch('/api/ref');
+    const res = await fetch('/api/ref', reval ? RELOAD : undefined);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     state.ref = await res.json();
     scheduleRender();
     if (state.selected) openCard(state.selected);
+    if (!reval && isOld(state.ref.fetched, REF_TTL)) setTimeout(() => loadRef(true), REVAL_DELAYS[0]);
   } catch {
     setTimeout(loadRef, 10 * 60000);
   }
@@ -358,7 +371,7 @@ function planTiles() {
         if (t && t.state === 'err' && now < t.retryAt) continue;
         const cx = (x + 0.5) * src.tile[0], cy = (y + 0.5) * src.tile[1];
         // întâi sursele cu preț, apoi OSM; în cadrul fiecărei grupe, cele mai apropiate de centru
-        jobs.set(key, { src, x, y, key, pri: src.id === 'osm' ? 1 : 0, d: (cx - c.lng) ** 2 + (cy - c.lat) ** 2 });
+        jobs.set(key, { src, x, y, key, reval: Boolean(t?.reval), pri: src.id === 'osm' ? 1 : 0, d: (cx - c.lng) ** 2 + (cy - c.lat) ** 2 });
       }
     }
   }
@@ -405,10 +418,10 @@ function noteDeRequest(res) {
   else if (!cached) state.deNextAt = Math.max(state.deNextAt, Date.now() + DE_MIN_INTERVAL_MS);
 }
 
-async function loadTile({ src, x, y, key }) {
+async function loadTile({ src, x, y, key, reval }) {
   state.tiles.set(key, { state: 'loading', at: Date.now() });
   try {
-    const res = await fetch(`/api/tile?s=${src.id}&x=${x}&y=${y}`);
+    const res = await fetch(`/api/tile?s=${src.id}&x=${x}&y=${y}`, reval ? RELOAD : undefined);
     if (src.id === 'de') noteDeRequest(res);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
@@ -421,7 +434,16 @@ async function loadTile({ src, x, y, key }) {
     evictIfNeeded();
     // rezultat parțial (o parte a sursei n-a răspuns): reîncercăm peste 2 minute
     const ttl = data.partial ? 120 : src.ttl;
-    state.tiles.set(key, { state: 'ok', at: Date.now(), ttl });
+    const n = state.revals.get(key) || 0;
+    if (isOld(data.fetched, src.ttl) && n < REVAL_DELAYS.length) {
+      // copie veche: rămâne pe hartă până sosește cea nouă
+      state.revals.set(key, n + 1);
+      state.tiles.set(key, { state: 'ok', at: Date.now(), ttl: REVAL_DELAYS[n] / 1000, reval: true });
+      setTimeout(update, REVAL_DELAYS[n] + 100);
+    } else {
+      state.revals.delete(key);
+      state.tiles.set(key, { state: 'ok', at: Date.now(), ttl });
+    }
     state.fails.delete(key);
     state.errors.delete(src.id);
     scheduleRender();
