@@ -5,7 +5,8 @@ import { readXlsx, unzip, excelDate, colIndex } from '../lib/xlsx.js';
 import { parse as parseWob, findFileUrl } from '../lib/ref/wob.js';
 import { parse as parseBe, parseDay } from '../lib/ref/be.js';
 import { parse as parseLu, parseCsv } from '../lib/ref/lu.js';
-import { parse as parseRs, findNotice, parseSerbianDate } from '../lib/ref/rs.js';
+import { parse as parseRs, findNotice, findNoticeInNews, parseSerbianDate } from '../lib/ref/rs.js';
+import rs from '../lib/ref/rs.js';
 import { parse as parseMe, findArticle } from '../lib/ref/me.js';
 import { parseEcb, parseBnm, parseNbs, parseNbrm, getRates } from '../lib/fx.js';
 import * as F from './fixtures.js';
@@ -93,7 +94,8 @@ test('/api/ref: o singură descărcare (memo), cache CDN 4 h, sursele și țări
     if (/weekly-oil-bulletin_en$/.test(url)) return { status: 200, text: '<a href="/document/download/264c2d0f-f161-4ea3-a777-78faae59bea0_en" data-untranslated-label="Prices with taxes latest prices">x</a>', headers: {} };
     if (/document\/download/.test(url)) { assert.equal(opts.binary, true); return { status: 200, buffer: WOB_FILE, headers: {} }; }
     if (/bestat\.statbel/.test(url)) return { status: 200, text: JSON.stringify(F.BE_BESTAT), headers: {} };
-    if (/must\.gov\.rs\/rss/.test(url)) return { status: 200, text: F.RS_RSS, headers: {} };
+    if (/must\.gov\.rs\/vesti\/$/.test(url)) return { status: 200, text: F.RS_LIST, headers: {} };
+    if (/must\.gov\.rs\/rss/.test(url)) return { status: 403, text: 'унапређење система', headers: {} };
     if (/must\.gov\.rs\/vest\//.test(url)) return { status: 200, text: F.RS_NOTICE, headers: {} };
     if (/wapi\.gov\.me/.test(url)) return { status: 200, text: JSON.stringify(F.ME_LIST), headers: {} };
     if (/gov\.me\/clanak\//.test(url)) return { status: 200, text: F.ME_ARTICLE, headers: {} };
@@ -168,6 +170,8 @@ test('Serbia: anunțul din RSS, prețurile în RSD, perioada de valabilitate', (
   assert.equal(parseSerbianDate('25. септембар 2026.'), '2026-09-25');
   assert.equal(parseSerbianDate('1. маја 2027'), '2027-05-01');
   assert.equal(findNotice(F.RS_RSS), 'https://must.gov.rs/vest/22207');
+  assert.equal(findNoticeInNews(F.RS_LIST), 'https://must.gov.rs/vest/22471/obavestenje-o-najvisoj-maloprodajnoj-ceni-derivata-nafte-evro-dizel-i-evro-premijum-bmb-95.php');
+  assert.equal(findNoticeInNews('<a href="/vest/1/x.php">Altceva</a>'), null);
   assert.equal(findNotice('<rss><channel><item><title>Altceva</title><link>x</link></item></channel></rss>'), null);
   assert.deepEqual(parseRs(F.RS_NOTICE), { RS: { kind: 'max', cur: 'RSD', p: { diesel: 236, e5: 207 }, date: '2026-09-25', until: '2026-10-02' } });
   assert.throws(() => parseRs('<p>nimic</p>'), /prețurile/);
@@ -177,6 +181,7 @@ test('Muntenegru: articolul „Nove cijene goriva”, prețuri EUR/L', () => {
   assert.deepEqual(findArticle(F.ME_LIST), { slug: 'nove-cijene-goriva-od-22092026', date: '2026-09-22' });
   assert.equal(findArticle({ data: { data: [{ title: 'Altceva', slug: 'x' }] } }), null);
   assert.deepEqual(parseMe(F.ME_ARTICLE, '2026-09-22'), { ME: { kind: 'max', cur: 'EUR', p: { e5: 1.74, e98: 1.78, diesel: 1.95 }, date: '2026-09-22' } });
+  assert.deepEqual(parseMe(F.ME_ARTICLE_COLON, '2026-10-06').ME.p, { e5: 1.77, e98: 1.81, diesel: 1.96 }, 'formatul cu două puncte (oct. 2026)');
   assert.throws(() => parseMe('<p>nimic</p>', '2026-09-22'), /prețurile/);
 });
 
@@ -204,5 +209,21 @@ test('cursuri: BCE (toate monedele), BNM, NBS, NBRM; toate picate -> valori de r
   const fb = await getRates();
   assert.equal(fb.source, 'fallback');
   assert.equal(fb.rates.RON, 5.28);
+});
+
+test('Serbia: pagina de vești are prioritate, RSS-ul e rezerva', async () => {
+  const calls = [];
+  restore = setTransport(async (url) => {
+    calls.push(url);
+    if (/\/vesti\/$/.test(url)) return { status: 503, text: 'down', headers: {} };
+    if (/\/rss\/$/.test(url)) return { status: 200, text: F.RS_RSS, headers: {} };
+    if (/\/vest\/22207$/.test(url)) return { status: 200, text: F.RS_NOTICE, headers: {} };
+    throw new Error(`neașteptat: ${url}`);
+  });
+  assert.equal((await rs.fetch()).RS.p.diesel, 236);
+  assert.deepEqual(calls, ['https://must.gov.rs/vesti/', 'https://must.gov.rs/rss/', 'https://must.gov.rs/vest/22207']);
+  restore();
+  restore = setTransport(async () => ({ status: 403, text: '', headers: {} }));
+  await assert.rejects(rs.fetch(), /HTTP 403/);
 });
 

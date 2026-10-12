@@ -164,11 +164,83 @@ export const RS_NOTICE = `<html><body><article><div class="article-date">
                                             <ul class="slides">
                                                                                             </ul>
 </article></body></html>`;
+// Serbia: pagina publică cu vești (must.gov.rs/vesti/, 12 oct. 2026, scurtată), folosită când RSS-ul nu răspunde
+export const RS_LIST = `<ul class="list-unstyled news-list">
+<li class="news-item col-sm-6 col-md-6 col-lg-3">
+<div class="news-image">
+<a href="/vest/22471/obavestenje-o-najvisoj-maloprodajnoj-ceni-derivata-nafte-evro-dizel-i-evro-premijum-bmb-95.php" class="image-anchor">
+<img
+class="img-responsive"
+src="/extimages/sr/224/77/thumb_auto_generated_veliki baner 2023 (51).webp"
+alt=""
+data-year="2026"
+title=""
+/>
+<span class="multimedia-flag "></span>
+</a>
+</div>
+<div class="news-text">
+<div class="item-date">
+9. октобар 2026.                                        <h1 class="press-title">
+<a href="/vest/22471/obavestenje-o-najvisoj-maloprodajnoj-ceni-derivata-nafte-evro-dizel-i-evro-premijum-bmb-95.php">
+ОБАВЕШТЕЊЕ О НАЈВИШОЈ МАЛОПРОДАЈНОЈ ЦЕНИ ДЕРИВАТА НАФТЕ EVRO DIZEL И EVRO PREMIJUM BMB 95                                            </a>
+</h1>
+</div>
+</li>
+<div class="clearfix hidden-md hidden-sm hidden-lg"></div>
+<li class="news-item col-sm-6 col-md-6 col-lg-3">
+<div class="news-image">
+<a href="/vest/22432/obavestenje-o-preliminarnim-rezultatima-javnog-konkursa-za-finansiranje-programa-od-javnog-interesa-u-oblasti-zastite-potrosaca-za-2026-godinu.php" class="image-anchor">
+<img
+class="img-responsive"
+src="/img/noimage.webp"
+alt="                                                title=""
+/>
+<span class="multimedia-flag "></span>
+</a>
+</div>
+<div class="news-text">
+<div class="item-date">
+8. октобар 2026.                                        <h1 class="press-title">
+<a href="/vest/22432/obavestenje-o-preliminarnim-rezultatima-javnog-konkursa-za-finansiranje-programa-od-javnog-interesa-u-oblasti-zastite-potrosaca-za-2026-godinu.php">
+Обавештење о прелиминарним резултатима Jавног конкурса за финансирање програма од јавног интереса у области заштите потрошача за 2026. годину                                            </a>
+</h1>
+</div>
+</li>
+<div class="clearfix hidden-md hidden-sm hidden-lg"></div>
+<div class="clearfix hidden-lg  hidden-xs"></div>
+<li class="news-item col-sm-6 col-md-6 col-lg-3">
+<div class="news-image">
+<a href="/vest/22297/obavestenje-o-najvisoj-maloprodajnoj-ceni-derivata-nafte-evro-dizel-i-evro-premijum-bmb-95.php" class="image-anchor">
+<img
+class="img-responsive"
+src="/extimages/sr/223/03/thumb_auto_generated_veliki baner 2023 (50).webp"
+alt=""
+data-year="2026"
+title=""
+/>
+<span class="multimedia-flag "></span>
+</a>
+</div>
+<div class="news-text">
+<div class="item-date">
+2. октобар 2026.                                        <h1 class="press-title">
+<a href="/vest/22297/obavestenje-o-najvisoj-maloprodajnoj-ceni-derivata-nafte-evro-dizel-i-evro-premijum-bmb-95.php">
+ОБАВЕШТЕЊЕ О НАЈВИШОЈ МАЛОПРОДАЈНОЈ ЦЕНИ ДЕРИВАТА НАФТЕ EVRO DIZEL И EVRO PREMIJUM BMB 95                                            </a>
+</h1>
+</div>
+</li>
+<div class="clearfix hidden-md hidden-sm hidden-lg"></div>
+</ul>`;
 
 // Muntenegru: lista de articole din wapi.gov.me (scurtată) și articolul „Nove cijene goriva od 22.09.2026” (fragment)
 export const ME_LIST = { data: { data: [{"id":170211,"title":"Nove cijene goriva od 22.09.2026","slug":"nove-cijene-goriva-od-22092026","published_at":"2026-09-21 19:47:11"},{"id":170009,"title":"Crna Gora i Švedska: prostor za snažnije partnerstvo u energetici","slug":"crna-gora-i-svedska-prostor-za-snaznije-partnerstvo-u-energetici","published_at":"2026-09-15 17:00:00"},{"id":169972,"title":"Nove cijene goriva od 15.09.2026","slug":"nove-cijene-goriva-od-15092026","published_at":"2026-09-14 20:01:31"}] } };
 export const ME_ARTICLE = `<html><body><main><h1>Nove cijene goriva od 22.09.2026</h1>
 <span _ngcontent-sc243="" class="font-medium">Objavljeno: </span><span _ngcontent-sc243="" class="font-light"> 21.09.2026. <span _ngcontent-sc243="">•</span> 19:47 </span></span><!----><span _ngcontent-sc243="" class="block text-gray-200 text-18 leading-100"><span _ngcontent-sc243="" class="font-medium">Autor: </span><!----><a _ngcontent-sc243="" class="font-light text-cyprus hover:underline" title="Ministarstvo energetike i rudarstva" aria-label="Ministarstvo energetike i rudarstva" href="/pretraga?author=1985"> Ministarstvo energetike i rudarstva </a><!----></span><!----></div></app-article-meta><span class="block border-t border-gray-300 mt-4 mb-8"></span><app-article-toc _nghost-sc244=""><!----></app-article-toc><app-article-body><section class="relative ui-article-spacing"><div id="ui-article" class="ui-article"><div><div><p>Poštovani,</p><p>Obavještavamo vas da od 22. septembra 2026. godine važe sljedeće maksimalne maloprodajne cijene naftnih derivata:</p><p><strong>EUROSUPER 98 1.78 €/l (+0.02)<br><br>EUROSUPER 95 1.74 €/l (+0.02)<br><br>EURODIZEL 1.95 €/l (+0.05)<br><br>LOŽ ULJE 2.07 €/l (+0,09)</strong></p><p>Obračun maksimalnih maloprodajnih cijena navedenih derivata izvršen je u skladu sa Odlukom o umanjenju iznosa akcize za promet bezolovnog benzina i gasnih ulja po kojoj je akciza na benzin snizena 30% a na dizel 40 %, koja je donijeta na danasnjoj sjednici Vlade i Uredbom o načinu obračuna maksimalne maloprodajne cijene određenih vrsta naftnih derivata („Službeni list Crne Gore“, br. 40/26).</p><p>Navedene cijene važiće od 22. do 28. septembra 2026. godine.</p><p>Naredni obračun biće izvršen 28. septembra 2026. godine, nakon čega će biti objavljene cijene koje će važiti od 29. septembra 2026. godine.</p>
+</main></body></html>`;
+// Muntenegru: articolul din 5 oct. 2026 (fragment), cu două puncte după denumire: „EUROSUPER 95: 1,77 €/l”
+export const ME_ARTICLE_COLON = `<html><body><main><h1>Nove cijene goriva od 06.10.2026</h1>
+<div id="ui-article" class="ui-article"><div><div><p>Poštovani,</p><p>Obavještavamo vas da od 6. oktobra 2026. godine važe sljedeće maksimalne maloprodajne cijene naftnih derivata:</p><p><strong>EUROSUPER 98: 1,81 €/l (+0,02)</strong><strong></strong><br><strong></strong><br><strong>EUROSUPER 95: 1,77 €/l (+0,02)</strong><strong></strong><br><strong></strong><br><strong>EURODIZEL: 1,96 €/l (+0,01)</strong><strong></strong><br><strong></strong><br><strong>LOŽ ULJE: 1,98 €/l (-0,04)</strong></p><p>Obračun maksimalnih maloprodajnih cijena navedenih derivata izvršen je u skladu sa Odlukom o umanjenju iznosa akcize za promet bezolovnog benzina i gasnih ulja, usvojenom na današnjoj sjednici Vlade, po kojoj je iznos akcize umanjen 25% za benzine i 15% za eurodizel, kao i Uredbom o načinu obračuna maksimalne maloprodajne cijene određenih vrsta naftnih derivata („Službeni list Crne Gore“, br. 40/26).</p><p>Navedene cijene važiće od 6. do 12. oktobra 2026. godine.</p><p>Naredni obračun biće izvršen 12. oktobra 2026. godine, nakon čega će biti objavljene cijene koje će važiti od 13. oktobra 2026. godine.</p></div><!----><!----></div><!----></div><!---->
 </main></body></html>`;
 
 // Cursuri: NBS (rândul EUR din lista cursului mediu), NBRM (JSON), BCE (XML scurtat, ratele sunt ilustrative)
