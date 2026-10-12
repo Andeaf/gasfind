@@ -25,8 +25,8 @@ Aplicație pentru telefon (PWA) cu harta benzinăriilor din Europa și prețuril
 | Slovenia | goriva.si | toate stațiile |
 | Croația | Ministerul Economiei (mzoe-gor.hr) | toate stațiile |
 | Danemarca | API-urile publice ale companiilor OK, Shell, Q8/F24, OIL!, Circle K și INGO (obligatorii prin lege din 2026) | ~1.600 de stații, live. Go'on și Uno-X apar doar cu chei (opțional, vezi mai jos). Restul benzinăriilor vin din OpenStreetMap. |
-| Cipru | Observatorul prețurilor la carburanți al Ministerului Energiei, Comerțului și Industriei (data.gov.cy, CC BY-SA 4.0) | toate stațiile (~320), în timp real |
-| Restul Europei | OpenStreetMap | benzinăriile apar pe hartă fără preț, cu prețul de referință al țării în fișă |
+| Cipru | Observatorul prețurilor la carburanți al Ministerului Energiei, Comerțului și Industriei (data.gov.cy, CC BY-SA 4.0) | toate stațiile (~320), în timp real. Fișa arată marca și localitatea, iar dedesubt firma care operează stația. |
+| Restul Europei | OpenStreetMap (copie săptămânală) | benzinăriile apar pe hartă fără preț, cu prețul de referință al țării în fișă |
 
 ### Prețuri de referință (pe țară, nu pe stație)
 
@@ -99,7 +99,18 @@ După ce adaugi cheile, publică din nou cu `npx vercel --prod`. Aplicația desc
 
 Sistemul guvernamental Fuel Finder (licență OGL v3.0) dă prețurile tuturor benzinăriilor din Regatul Unit, dar numai cu cont: îți faci un **GOV.UK One Login**, apoi te înregistrezi ca „information recipient” pe https://www.developer.fuel-finder.service.gov.uk/access-latest-fuelprices (portalul răspunde 403 din afara Regatului Unit, deci e nevoie de o conexiune din UK sau de emailul echipei Fuel Finder). Primești un `client_id` și un `client_secret` (OAuth2). Adaptorul nu e încă scris, pentru că documentația API-ului e disponibilă doar după autentificare.
 
-## 5. Instalare pe telefon
+## 5. Actualizări și verificări automate (GitHub Actions)
+
+Două workflow-uri rulează singure, în fiecare luni, pe GitHub (gratuit, în minutele incluse în cont):
+
+- **OSM săptămânal** (`.github/workflows/osm.yml`, 01:23 UTC): descarcă din Overpass benzinăriile OpenStreetMap țară cu țară, cu pauze și reîncercări, le salvează în `lib/data/osm/` și face commit pe `main`, deci Vercel publică singur noua copie. O țară care nu răspunde rămâne pe copia anterioară, iar workflow-ul pică (vezi mai jos). Ultimul pas așteaptă publicarea pe Vercel și pică dacă ea eșuează. Atunci o repornești din Vercel: **Deployments → … → Redeploy**.
+- **Verificare producție** (`.github/workflows/verificare.yml`, 06:17 UTC): cere câte o dală de la fiecare sursă, cu un parametru care ocolește cache-ul, plus prețurile de referință. Pică dacă o sursă nu răspunde, nu are stații sau are date vechi (prețuri mai vechi de 7 zile, copie OSM mai veche de 10 zile), ori dacă lipsesc țări din prețurile de referință (UE-27, plus maximele legale din Belgia, Luxemburg, Serbia și Muntenegru). Germania e sărită: Tankerkönig permite cereri doar la acțiunea unui utilizator.
+
+Când un workflow pică, GitHub îți trimite email (setarea implicită: **Settings → Notifications → Actions → Only notify for failed workflows**). Rezultatul fiecărei surse apare și în pagina rulării (**Actions → Verificare producție**). Le poți porni oricând manual din **Actions → Run workflow**, sau local: `node scripts/check-prod.js`.
+
+Commit-urile automate au ca autor contul tău (Andeaf): pe planul Hobby, Vercel nu publică dintr-un repository privat commit-uri ale altor autori, inclusiv ale botului GitHub Actions.
+
+## 6. Instalare pe telefon
 
 - **Android (Chrome):** deschide adresa aplicației, apoi meniul **⋮ → Instalează aplicația** (sau **Adaugă pe ecranul de pornire**).
 - **iPhone (Safari):** deschide adresa, apoi **Partajează → Adaugă pe ecranul principal**.
@@ -130,25 +141,31 @@ lib/ref.js         agregarea prețurilor de referință; lib/fx.js cursurile val
 lib/xlsx.js        cititor XLSX fără dependențe (Buletinul petrolier UE)
 lib/data/          contururile țărilor (Natural Earth), numele stațiilor franceze (OSM),
                    coordonatele stațiilor daneze Q8/F24 și Circle K/INGO (DAWA)
+lib/data/osm/      copia săptămânală a benzinăriilor OpenStreetMap, pe dale de 0,25° (generată)
+scripts/           generatoarele de date și verificarea producției (check-prod.js)
+.github/workflows/ copia OSM și verificarea, în fiecare luni
 server.js          server local
 test/              teste (mostre reale din fiecare sursă)
 ```
 
-Harta e împărțită în „dale”. Telefonul cere prețurile doar pentru zona vizibilă, iar serverul le păstrează în cache între 10 minute și 3 ore, după cât de des se schimbă sursa. Sursele care dau toată țara într-un răspuns (Danemarca, Cipru, Spania, Portugalia, prețurile de referință) sunt descărcate o singură dată și refolosite. Așa aplicația e rapidă și nu încarcă serverele oficiale.
+Harta e împărțită în „dale”. Telefonul cere prețurile doar pentru zona vizibilă, iar serverul le păstrează în cache între 10 minute și 3 ore, după cât de des se schimbă sursa. Sursele care dau toată țara într-un răspuns (Danemarca, Cipru, Spania, Portugalia, prețurile de referință) sunt descărcate o singură dată și refolosite. Benzinăriile OpenStreetMap vin din copia săptămânală din `lib/data/osm/`. Așa aplicația e rapidă și nu încarcă serverele oficiale.
+
+Dacă telefonul primește o dală mai veche decât dublul duratei ei de cache, o afișează, dar o cere din nou după 5 secunde și, la nevoie, după încă 20. Asta se întâmplă de obicei cu ultima copie salvată în telefon, folosită când nu e semnal sau serverul a dat eroare. CDN-ul Vercel servește o copie expirată cel mult până la triplul duratei de cache și o reîmprospătează în fundal.
 
 Fișiere pe care le poți regenera (după `npm install`):
 - `node scripts/copy-vendor.js` — MapLibre GL
 - `node scripts/build-countries.js` — contururile țărilor
 - `node scripts/build-dk-sites.js` — coordonatele stațiilor daneze Q8/F24 și Circle K/INGO (API-urile lor nu le dau; geocodare o singură dată cu DAWA, API-ul oficial al adreselor daneze; rulează când apar stații noi)
+- `node scripts/build-osm.js` — copia OpenStreetMap (fără `npm install`; durează de la ~30 de minute la câteva ore, după cât de încărcate sunt serverele Overpass; are un buget de 210 minute, după care țările rămase păstrează copia anterioară; `--only=HU,BG` reîncarcă doar câteva țări). De obicei o face workflow-ul de luni.
 
 ## Limitări de știut
 
 - **Tankerkönig (Germania):** o cerere pe minut. Când muți harta prin Germania, zonele noi primesc prețuri una pe minut, iar între timp stațiile apar din OpenStreetMap, fără preț.
-- **E-Control (Austria):** la testare (27 sept. 2026) era în mentenanță (HTTP 507). Dacă nu răspunde, stațiile austriece apar fără preț.
-- **OpenStreetMap:** serverele Overpass sunt uneori aglomerate. Benzinăriile fără preț pot apărea cu întârziere.
+- **E-Control (Austria):** a fost în mentenanță la sfârșitul lui septembrie 2026 (HTTP 507); merge din nou. Dacă nu răspunde, stațiile austriece apar fără preț.
+- **OpenStreetMap:** benzinăriile fără preț vin dintr-o copie refăcută în fiecare luni, deci o stație nou cartată apare cu până la o săptămână întârziere. Overpass (în timp real, des aglomerat) e folosit doar pentru o țară care lipsește din copie.
 - **Monitorul Prețurilor:** serverul lor trimite un certificat HTTPS incomplet. Aplicația adaugă corect certificatul intermediar lipsă (`lib/certs.js`), fără să dezactiveze verificarea securității.
-- **Cipru:** serverul observatorului răspunde în ~13 s la fiecare cerere; prima încărcare a țării durează ~15 s, apoi datele stau 30 de minute în cache.
-- **Serbia:** site-ul ministerului e publicat sub licență CC BY-NC-ND 3.0 RS; aplicația afișează doar valorile (fapte), cu sursa și data.
+- **Cipru:** serverul observatorului răspunde în 12–22 s la fiecare cerere, oricât de mică ar fi zona cerută. Toată insula e o singură dală, deci un singur utilizator așteaptă descărcarea, o dată la 30 de minute; ceilalți primesc răspunsul din cache.
+- **Serbia:** site-ul ministerului e publicat sub licență CC BY-NC-ND 3.0 RS; aplicația afișează doar valorile (fapte), cu sursa și data. Anunțul săptămânal e găsit în pagina de vești; fluxul RSS (folosit înainte) răspunde 403 din octombrie 2026. Firewall-ul site-ului blochează temporar adresele care fac multe cereri la rând.
 - Prețurile sunt informative. Verifică la pompă.
 
 ## Costuri
@@ -166,6 +183,7 @@ DGEG (Portugalia) permite doar folosirea necomercială, așa că aplicația e pe
 - MapLibre GL JS: licență BSD-3
 - Contururi țări: Natural Earth (domeniu public)
 - Nume stații Franța: OpenStreetMap (ODbL)
+- Benzinării fără preț: © contribuitorii OpenStreetMap (ODbL 1.0). Copia din `lib/data/osm/` e o bază de date derivată și rămâne sub ODbL 1.0 (https://www.openstreetmap.org/copyright).
 - Coordonate stații Danemarca (Q8/F24, Circle K/INGO): DAWA – Danmarks Adressers Web API (date publice daneze)
 - Prețuri pe stație: Consiliul Concurenței, ANRE, Ministère de l'Économie (Licence Ouverte 2.0), MITECO, DGEG, MIMIT (IODL 2.0), Tankerkönig / MTS-K (CC BY 4.0), E-Control, goriva.si, Ministarstvo gospodarstva RH, OK / Shell (DCC Energi) / Q8 Danmark / OIL! / Circle K Danmark / INGO (API-uri publice obligatorii prin legea daneză), Ministerul Energiei, Comerțului și Industriei din Cipru (CC BY-SA 4.0)
 - Prețuri de referință: Comisia Europeană – Weekly Oil Bulletin (CC BY 4.0), SPF Economie / Statbel (CC BY 4.0), STATEC / data.public.lu (CC0), Ministarstvo unutrašnje i spoljne trgovine Republike Srbije, Ministarstvo energetike i rudarstva Crne Gore
