@@ -1,190 +1,202 @@
-# GasFind ⛽
+# GasFind
 
-Aplicație pentru telefon (PWA) cu harta benzinăriilor din Europa și prețurile lor la zi, din surse oficiale gratuite.
+[![CI](https://github.com/Andeaf/gasfind/actions/workflows/ci.yml/badge.svg)](https://github.com/Andeaf/gasfind/actions/workflows/ci.yml)
+[![Live](https://img.shields.io/badge/live-gasfind--three.vercel.app-0f766e)](https://gasfind-three.vercel.app)
+[![License](https://img.shields.io/badge/license-source--available-lightgrey)](LICENSE)
 
-- Pe hartă, fiecare benzinărie are prețul carburantului ales. Culoarea arată cât de ieftină e față de celelalte din zonă: **verde** e cea mai ieftină, **roșu** cea mai scumpă.
-- Atingi o benzinărie și vezi toate prețurile, ora actualizării și distanța până la ea. Butonul **„Navighează cu Google Maps”** pornește navigația direct în Google Maps.
-- Butonul cu săgeată deschide lista celor mai ieftine benzinării din zona vizibilă.
-- În țările fără prețuri pe stație, fișa benzinăriei arată **prețul de referință** al țării (media națională sau prețul maxim legal), marcat clar că nu e prețul stației.
-- Merge pe Android și pe iPhone, fără magazin de aplicații. Nu costă nimic.
+GasFind is a free, installable web app (PWA) that shows fuel stations across Europe on a map, with live prices read directly from official public sources.
 
-## Ce date sunt disponibile
+It is built for drivers who cross borders and want one map instead of one app per country: no account, no ads, no paid APIs, no tracking. It runs in any phone browser and can be installed on the home screen on Android and iOS.
 
-### Prețuri pe stație
+**Status:** live at https://gasfind-three.vercel.app and actively maintained. Per-station prices cover 12 countries; every other European country gets its stations from OpenStreetMap and, for EU members plus Belgium, Luxembourg, Serbia and Montenegro, an official country-level reference price. The user interface is currently Romanian-only (an English UI is on the roadmap). Code comments are in Romanian.
 
-| Țara | Sursa (oficială, gratuită) | Ce vezi |
+<!--
+Screenshots: add the images to docs/screenshots/ and uncomment this block.
+| Map with ranked prices | Station card | Cheapest nearby |
 |---|---|---|
-| România | Consiliul Concurenței – Monitorul Prețurilor | Petrom, OMV, Rompetrol, Lukoil, MOL, Socar, Gazprom. Prețurile sunt raportate zilnic, noaptea. Benzinăriile independente (ex. Oscar) apar fără preț. |
-| Republica Moldova | ANRE – e-Carburanți | toate stațiile, prețuri în MDL, actualizate zilnic |
-| Franța | prix-carburants.gouv.fr | toate stațiile, actualizate la ~10 minute |
-| Spania | Ministerio para la Transición Ecológica (Geoportal) | toate stațiile, actualizate la ~30 de minute |
-| Portugalia (continentală) | DGEG | toate stațiile, fiecare schimbare de preț |
-| Italia | MIMIT – Osservaprezzi | toate stațiile, live (prețul self-service) |
-| Germania | Tankerkönig (datele MTS-K), CC BY 4.0 | toate stațiile, live. **Necesită o cheie gratuită** (vezi mai jos). Limita e de o cerere pe minut, așa că prețurile se încarcă treptat, o zonă pe minut; până atunci stațiile apar din OpenStreetMap, fără preț. |
-| Austria | E-Control – Spritpreisrechner | doar cele mai ieftine ~5 stații din zonă; așa publică legea austriacă |
-| Slovenia | goriva.si | toate stațiile |
-| Croația | Ministerul Economiei (mzoe-gor.hr) | toate stațiile |
-| Danemarca | API-urile publice ale companiilor OK, Shell, Q8/F24, OIL!, Circle K și INGO (obligatorii prin lege din 2026) | ~1.600 de stații, live. Go'on și Uno-X apar doar cu chei (opțional, vezi mai jos). Restul benzinăriilor vin din OpenStreetMap. |
-| Cipru | Observatorul prețurilor la carburanți al Ministerului Energiei, Comerțului și Industriei (data.gov.cy, CC BY-SA 4.0) | toate stațiile (~320), în timp real. Fișa arată marca și localitatea, iar dedesubt firma care operează stația. |
-| Restul Europei | OpenStreetMap (copie săptămânală) | benzinăriile apar pe hartă fără preț, cu prețul de referință al țării în fișă |
+| ![Map](docs/screenshots/map.png) | ![Station card](docs/screenshots/card.png) | ![Cheapest list](docs/screenshots/list.png) |
+-->
 
-### Prețuri de referință (pe țară, nu pe stație)
+## Features
 
-| Țara | Sursa | Tip | Actualizare |
+- **Map with prices on every station.** The marker shows the price of the selected fuel (diesel, petrol 95, E10, 98+, LPG). Colours rank the stations currently in view: green is the cheapest, red the most expensive.
+- **Station card** with all prices, the time of the last update, the distance from you and a one-tap **Navigate with Google Maps** button.
+- **Cheapest nearby**: a ranked list of the stations in the visible area.
+- **Country reference prices** (EU weekly average or the legal maximum price) shown, clearly labelled, for stations that have no price of their own.
+- **Cross-border comparison**: prices in RON and MDL are converted with central-bank rates, so a Romanian and a Hungarian station can be compared on the same map.
+- **Works offline**: a service worker caches the app shell and the last API responses; stale prices (older than 7 days) are drawn in grey.
+- **Respects every source's rules**: rate limits are enforced on the server and mirrored in the client, attribution is shown in the Info sheet, and bulk sources are downloaded once and shared through the CDN.
+
+## Data sources
+
+### Per-station prices (live)
+
+| Country | Official source | Coverage |
+|---|---|---|
+| Romania | Competition Council, *Monitorul Prețurilor* | Petrom, OMV, Rompetrol, Lukoil, MOL, Socar, Gazprom (reported daily). Independent stations appear without a price. |
+| Moldova | ANRE, *e-Carburanți* | all stations, MDL, daily |
+| France | prix-carburants.gouv.fr (Licence Ouverte 2.0) | all stations, refreshed every ~10 minutes |
+| Spain | MITECO Geoportal | all stations, ~30 minutes |
+| Portugal (mainland) | DGEG | all stations, every price change (non-commercial use only) |
+| Italy | MIMIT, *Osservaprezzi* (IODL 2.0) | all stations, live self-service price |
+| Germany | Tankerkönig (MTS-K data, CC BY 4.0) | all stations, live. Needs a free API key; one request per minute per key, so areas load progressively. |
+| Austria | E-Control, *Spritpreisrechner* | only the ~5 cheapest stations per area, as Austrian law prescribes |
+| Slovenia | goriva.si | all stations |
+| Croatia | Ministry of Economy (mzoe-gor.hr) | all stations |
+| Denmark | Public price APIs of OK, Shell, Q8/F24, OIL!, Circle K and INGO (mandatory under Danish law since 2026) | ~1,600 stations, live. Go'on and Uno-X need optional keys. |
+| Cyprus | Ministry of Energy, Commerce and Industry price observatory (data.gov.cy, CC BY-SA 4.0) | all ~320 stations, live |
+| Rest of Europe | OpenStreetMap (weekly snapshot, ODbL) | stations without a price; the card shows the country's reference price |
+
+### Reference prices (per country, not per station)
+
+| Country | Source | Kind | Refresh |
 |---|---|---|---|
-| toate statele UE (și RO, AT pentru stațiile fără preț) | Buletinul petrolier săptămânal al Comisiei Europene (CC BY 4.0) | medie națională | săptămânal (prețurile de luni apar joia) |
-| Belgia | SPF Economie, prin Statbel be.STAT (CC BY 4.0) | preț maxim legal | zilnic |
-| Luxemburg | Ministère de l'Économie, prin STATEC/LUSTAT (data.public.lu, CC0) | preț maxim legal | la fiecare schimbare |
-| Serbia | Ministarstvo unutrašnje i spoljne trgovine (must.gov.rs) | preț maxim legal, RSD | săptămânal (vineri) |
-| Muntenegru | Ministarstvo energetike i rudarstva (gov.me) | preț maxim legal | săptămânal (luni) |
+| All EU members | European Commission, Weekly Oil Bulletin (CC BY 4.0) | national average | weekly |
+| Belgium | FPS Economy via Statbel be.STAT (CC BY 4.0) | legal maximum | daily |
+| Luxembourg | Ministry of the Economy via STATEC/LUSTAT (CC0) | legal maximum | on every change |
+| Serbia | Ministry of Internal and Foreign Trade (must.gov.rs) | legal maximum, RSD | weekly |
+| Montenegro | Ministry of Energy and Mining (gov.me) | legal maximum | weekly |
 
-Prețurile de referință apar doar în fișa stațiilor fără preț și într-o bandă discretă sub butoanele de carburant, când zona vizibilă e într-o țară fără prețuri pe stație. Nu intră în colorarea hărții și nici în lista celor mai ieftine.
+Reference prices appear only in the card of a station without a price and in a small band under the fuel selector when the visible area is in a country without per-station data. They never influence the map colours or the cheapest list.
 
-Fără sursă gratuită (nici pe stație, nici de referință): Marea Britanie (Fuel Finder cere cont GOV.UK One Login), Elveția, Norvegia, Macedonia de Nord, Albania. Grecia publică prețurile pe stație doar în spatele unui reCAPTCHA care interzice explicit accesul automat, iar Cehia (preț maxim, doar în octombrie 2026) doar în PDF-uri greu de citit; ambele rămân pe media UE.
+**No free source yet:** United Kingdom (Fuel Finder requires a GOV.UK One Login account and a UK IP address), Switzerland, Norway, North Macedonia, Albania. Greece publishes station prices only behind a reCAPTCHA that forbids automated access; Czechia publishes maximum prices only in hard-to-parse PDFs. These stay on the EU average where available.
 
-## 1. Publicare gratuită pe internet (Vercel)
+## Tech stack
 
-Aplicația are nevoie de un mic server care citește sursele de date. Serverul rulează gratuit pe Vercel (planul Hobby, pentru uz personal). Ai nevoie doar de Node.js, pe care îl ai deja.
+| Layer | Choice |
+|---|---|
+| Runtime | Node.js ≥ 20, plain ES modules, **zero runtime dependencies** |
+| Frontend | Vanilla JavaScript (one module), MapLibre GL JS 6.11.2 (vendored), OpenFreeMap vector tiles, service worker (PWA) |
+| Backend | Vercel serverless functions (region `fra1`) behind the Vercel CDN; the same handler runs locally through a 60-line Node server |
+| Tests | Node's built-in test runner, 55 tests, no network access; optional Playwright smoke test against a mock server |
+| Automation | GitHub Actions: CI on every push, weekly OpenStreetMap snapshot, weekly production health check |
+| Dev dependencies | esbuild, maplibre-gl, topojson-client, world-atlas (only for the generator scripts) |
 
-Deschide CMD și rulează:
+## Architecture
 
-```
-cd /d D:\GasFind
-npx vercel login
-npx vercel --prod
-```
-
-- La `login` alege **Continue with GitHub**. Contul Vercel se creează gratuit, fără card.
-- La prima publicare răspunde **Enter** (valorile implicite) la întrebări: *Set up and deploy* → Y, *Link to existing project* → N, nume `gasfind`, director `./`.
-- La final primești adresa aplicației, de forma `https://gasfind-xxxx.vercel.app`.
-
-Varianta fără linie de comandă:
-1. Urcă folderul într-un repository GitHub (fără `node_modules`).
-2. Pe vercel.com, alege **Add New → Project** și importă repository-ul.
-3. Apasă **Deploy**. Setările sunt deja în `vercel.json`.
-
-Proiectul acesta e legat de repository-ul GitHub `Andeaf/gasfind`: fiecare push pe ramura `main` publică automat o nouă versiune în producție, iar push-urile pe alte ramuri creează versiuni de previzualizare.
-
-## 2. Germania: cheia Tankerkönig (gratuită)
-
-1. Cere cheia pe https://onboarding.tankerkoenig.de (nume și email). O primești pe email după ce confirmi adresa.
-2. Adaug-o în Vercel și publică din nou:
-
-```
-npx vercel env add TANKERKOENIG_API_KEY production
-npx vercel --prod
+```mermaid
+flowchart LR
+  subgraph Client["Phone / browser"]
+    UI["public/app.js<br/>MapLibre map, cards, lists"]
+    SW["public/sw.js<br/>app shell + API fallback"]
+  end
+  UI -->|"/api/tile?s=&x=&y=<br/>/api/ref, /api/config"| CDN["Vercel CDN<br/>s-maxage per source"]
+  SW -. "offline fallback" .-> UI
+  CDN --> H["lib/handler.js<br/>route(path, params, env)"]
+  H --> REG["lib/registry.js"]
+  REG --> SRC["lib/sources/*.js<br/>12 per-station adapters"]
+  REG --> OSM["lib/sources/osm.js"]
+  H --> REF["lib/ref.js + lib/fx.js<br/>country reference prices"]
+  SRC --> API[("Official APIs<br/>RO MD FR ES PT IT DE AT SI HR DK CY")]
+  REF --> API2[("EU Oil Bulletin, Statbel, LUSTAT,<br/>must.gov.rs, gov.me, ECB/BNM/NBS/NBRM")]
+  OSM --> SNAP[("lib/data/osm/<br/>weekly snapshot, 0.25° tiles")]
 ```
 
-Poți pune cheia și din site: **Project → Settings → Environment Variables**, apoi faci din nou Deploy.
+**One request path, two hosts.** The client calls four JSON endpoints: `/api/config`, `/api/tile`, `/api/detail` and `/api/ref`. The files in `api/` are six-line Vercel wrappers and `server.js` routes the same paths locally. All logic lives in `lib/handler.js`, which is platform-agnostic.
 
-Regulile Tankerkönig (din emailul de activare): o cerere pe minut per cheie, rază de cel mult 25 km, cereri doar când utilizatorul se uită la hartă, atribuire obligatorie (aplicația o afișează), iar datele nu se dau firmelor din industria petrolieră. Aplicația respectă limita atât pe server, cât și în telefon. Fără cheie, aplicația merge normal, dar benzinăriile din Germania apar fără preț. Nu folosi cheia demo din documentația Tankerkönig: e doar pentru teste.
+**Tiles are per source.** Each adapter declares its own tile size in degrees, sized to its API's radius and result limits, and a coverage list of bounding boxes. At zoom 10 and above the client computes which tiles of each enabled source cover the viewport and fetches them with a small concurrency limit. Priced sources are queued before OpenStreetMap, which may use at most two of the six request slots.
 
-## 3. Chei opționale: Danemarca (Go'on și Uno-X)
+**Caching lives in the CDN.** Every tile response carries `s-maxage` equal to the source's refresh interval (10 minutes to 14 days) and `stale-while-revalidate` of twice that; the browser keeps it for at most 60 seconds. Partial responses get a short TTL and errors are never cached. The client re-requests any tile older than twice its TTL, which usually means it came from the service worker's offline fallback.
 
-Cele cinci API-uri daneze mari merg fără cheie. Pentru celelalte două:
+**Bulk national sources** (Denmark, Cyprus, Spain, Portugal and all reference prices) are downloaded once per function instance with an in-memory memo that deduplicates in-flight loads and serves a stale copy if the loader fails, then filtered by bounding box per tile.
 
-- **Go'on** (~200 de stații): completezi formularul de pe https://goon.nu/faa-adgang-til-api/ (nume și email); cheia vine automat pe email în câteva minute. Limita: o cerere la 30 de secunde.
-  ```
-  npx vercel env add GOON_API_KEY production
-  ```
-- **Uno-X** (~280 de stații): trimiți un email la info@unox.dk cu subiectul „Adgang til pris-API” și primești un `client_id` și un `client_secret` (OAuth2, client credentials). Limita: o cerere la 30 de secunde.
-  ```
-  npx vercel env add UNOX_CLIENT_ID production
-  npx vercel env add UNOX_CLIENT_SECRET production
-  ```
+**Normalised stations.** Every adapter returns stations through a single constructor that rounds coordinates, drops implausible prices per currency and converts source timestamps (usually local time without a zone) to UTC ISO strings.
 
-După ce adaugi cheile, publică din nou cu `npx vercel --prod`. Aplicația descarcă lista fiecărei companii cel mult o dată la 10 minute.
+**OpenStreetMap as the fallback layer.** Stations without a price are shown only in countries that lack a complete official source, with a point-in-polygon filter against Natural Earth borders. The data come from a weekly snapshot (one Overpass query per country, retries over three endpoints, a time budget, failed countries keep their previous data) committed by a GitHub Actions workflow. Live Overpass is used only for a country missing from the snapshot.
 
-## 4. Marea Britanie: Fuel Finder (necesită cont)
-
-Sistemul guvernamental Fuel Finder (licență OGL v3.0) dă prețurile tuturor benzinăriilor din Regatul Unit, dar numai cu cont: îți faci un **GOV.UK One Login**, apoi te înregistrezi ca „information recipient” pe https://www.developer.fuel-finder.service.gov.uk/access-latest-fuelprices (portalul răspunde 403 din afara Regatului Unit, deci e nevoie de o conexiune din UK sau de emailul echipei Fuel Finder). Primești un `client_id` și un `client_secret` (OAuth2). Adaptorul nu e încă scris, pentru că documentația API-ului e disponibilă doar după autentificare.
-
-## 5. Actualizări și verificări automate (GitHub Actions)
-
-Două workflow-uri rulează singure, în fiecare luni, pe GitHub (gratuit, în minutele incluse în cont):
-
-- **OSM săptămânal** (`.github/workflows/osm.yml`, 01:23 UTC): descarcă din Overpass benzinăriile OpenStreetMap țară cu țară, cu pauze și reîncercări, le salvează în `lib/data/osm/` și face commit pe `main`, deci Vercel publică singur noua copie. O țară care nu răspunde rămâne pe copia anterioară, iar workflow-ul pică (vezi mai jos). Ultimul pas așteaptă publicarea pe Vercel și pică dacă ea eșuează. Atunci o repornești din Vercel: **Deployments → … → Redeploy**.
-- **Verificare producție** (`.github/workflows/verificare.yml`, 06:17 UTC): cere câte o dală de la fiecare sursă, cu un parametru care ocolește cache-ul, plus prețurile de referință. Pică dacă o sursă nu răspunde, nu are stații sau are date vechi (prețuri mai vechi de 7 zile, copie OSM mai veche de 10 zile), ori dacă lipsesc țări din prețurile de referință (UE-27, plus maximele legale din Belgia, Luxemburg, Serbia și Muntenegru). Germania e sărită: Tankerkönig permite cereri doar la acțiunea unui utilizator.
-
-Când un workflow pică, GitHub îți trimite email (setarea implicită: **Settings → Notifications → Actions → Only notify for failed workflows**). Rezultatul fiecărei surse apare și în pagina rulării (**Actions → Verificare producție**). Le poți porni oricând manual din **Actions → Run workflow**, sau local: `node scripts/check-prod.js`.
-
-Commit-urile automate au ca autor contul tău (Andeaf): pe planul Hobby, Vercel nu publică dintr-un repository privat commit-uri ale altor autori, inclusiv ale botului GitHub Actions.
-
-## 6. Instalare pe telefon
-
-- **Android (Chrome):** deschide adresa aplicației, apoi meniul **⋮ → Instalează aplicația** (sau **Adaugă pe ecranul de pornire**).
-- **iPhone (Safari):** deschide adresa, apoi **Partajează → Adaugă pe ecranul principal**.
-- La prima pornire, permite accesul la locație ca harta să se centreze pe tine.
-
-## Rulare pe calculator (opțional)
+### Project layout
 
 ```
-cd /d D:\GasFind
-node server.js
+public/            the app: HTML, CSS, JS, vendored MapLibre, icons, service worker
+api/               Vercel function wrappers: /api/config, /api/tile, /api/detail, /api/ref
+lib/handler.js     the API logic (shared by Vercel and the local server)
+lib/sources/*.js   one adapter per per-station price source (+ osm.js)
+lib/ref/*.js       one adapter per reference-price source; lib/ref.js aggregates them
+lib/fx.js          exchange rates (ECB, BNM, NBS, NBRM)
+lib/http.js        fetch with timeout/retry/CA override, concurrency limiter, memo cache
+lib/xlsx.js        dependency-free XLSX reader (EU Weekly Oil Bulletin)
+lib/station.js     the normalised station schema
+lib/data/          generated data: country polygons, French station names, Danish coordinates
+lib/data/osm/      the weekly OpenStreetMap snapshot (generated, ODbL)
+scripts/           data generators and the production health check
+test/              tests with trimmed real responses as fixtures
+.github/workflows/ CI, weekly OSM snapshot, weekly production check
+server.js          local server
 ```
 
-Apoi deschide http://localhost:3000.
+## Running locally
 
-- Pentru date de test, fără internet: `set GASFIND_MOCK=1 && node server.js`.
-- Cheile se pot pune local într-un fișier `.env`: vezi `.env.example`.
-- Testele automate rulează cu `npm test`.
+Prerequisites: Node.js 20 or newer. Nothing to install: the app has no runtime dependencies.
 
-## Cum funcționează
-
-```
-public/            aplicația (HTML, CSS, JS, MapLibre, iconițe, service worker)
-api/               funcțiile Vercel: /api/config, /api/tile, /api/detail, /api/ref
-lib/handler.js     logica API-ului (aceeași pe Vercel și local)
-lib/sources/*.js   câte un adaptor pentru fiecare sursă de prețuri pe stație
-lib/ref/*.js       câte un adaptor pentru fiecare sursă de prețuri de referință (pe țară)
-lib/ref.js         agregarea prețurilor de referință; lib/fx.js cursurile valutare (BCE, BNM, NBS, NBRM)
-lib/xlsx.js        cititor XLSX fără dependențe (Buletinul petrolier UE)
-lib/data/          contururile țărilor (Natural Earth), numele stațiilor franceze (OSM),
-                   coordonatele stațiilor daneze Q8/F24 și Circle K/INGO (DAWA)
-lib/data/osm/      copia săptămânală a benzinăriilor OpenStreetMap, pe dale de 0,25° (generată)
-scripts/           generatoarele de date și verificarea producției (check-prod.js)
-.github/workflows/ copia OSM și verificarea, în fiecare luni
-server.js          server local
-test/              teste (mostre reale din fiecare sursă)
+```bash
+git clone https://github.com/Andeaf/gasfind.git
+cd gasfind
+node server.js                     # http://localhost:3000
 ```
 
-Harta e împărțită în „dale”. Telefonul cere prețurile doar pentru zona vizibilă, iar serverul le păstrează în cache între 10 minute și 3 ore, după cât de des se schimbă sursa. Sursele care dau toată țara într-un răspuns (Danemarca, Cipru, Spania, Portugalia, prețurile de referință) sunt descărcate o singură dată și refolosite. Benzinăriile OpenStreetMap vin din copia săptămânală din `lib/data/osm/`. Așa aplicația e rapidă și nu încarcă serverele oficiale.
+- **Mock mode** (deterministic fake data, every source enabled, no network): `GASFIND_MOCK=1 node server.js` (on Windows: `set GASFIND_MOCK=1 && node server.js`).
+- **API keys** are optional and only unlock extra sources (Germany, two Danish brands). Copy `.env.example` to `.env` and fill in what you have; the local server reads it. On Vercel, set them as environment variables.
+- `PORT` overrides the port.
 
-Dacă telefonul primește o dală mai veche decât dublul duratei ei de cache, o afișează, dar o cere din nou după 5 secunde și, la nevoie, după încă 20. Asta se întâmplă de obicei cu ultima copie salvată în telefon, folosită când nu e semnal sau serverul a dat eroare. CDN-ul Vercel servește o copie expirată cel mult până la triplul duratei de cache și o reîmprospătează în fundal.
+### Tests
 
-Fișiere pe care le poți regenera (după `npm install`):
-- `node scripts/copy-vendor.js` — MapLibre GL
-- `node scripts/build-countries.js` — contururile țărilor
-- `node scripts/build-dk-sites.js` — coordonatele stațiilor daneze Q8/F24 și Circle K/INGO (API-urile lor nu le dau; geocodare o singură dată cu DAWA, API-ul oficial al adreselor daneze; rulează când apar stații noi)
-- `node scripts/build-osm.js` — copia OpenStreetMap (fără `npm install`; durează de la ~30 de minute la câteva ore, după cât de încărcate sunt serverele Overpass; are un buget de 210 minute, după care țările rămase păstrează copia anterioară; `--only=HU,BG` reîncarcă doar câteva țări). De obicei o face workflow-ul de luni.
+```bash
+npm test                                   # all tests, no network needed
+node --test test/parsers.test.js           # one file
+node --test --test-name-pattern="Cipru" test/parsers.test.js
+```
 
-## Limitări de știut
+Tests never touch the network: the handler tests swap the HTTP transport, and the parser tests run each adapter against trimmed real responses kept in `test/fixtures.js`. A headless-Chromium smoke test (`test/ui.mjs`, mobile viewport) runs against the mock server; Playwright is not a project dependency: point `PLAYWRIGHT_PATH` at an existing `playwright` package and `GLYPHS` at a `0-255.pbf` glyph file, then run `node test/ui.mjs`.
 
-- **Tankerkönig (Germania):** o cerere pe minut. Când muți harta prin Germania, zonele noi primesc prețuri una pe minut, iar între timp stațiile apar din OpenStreetMap, fără preț.
-- **E-Control (Austria):** a fost în mentenanță la sfârșitul lui septembrie 2026 (HTTP 507); merge din nou. Dacă nu răspunde, stațiile austriece apar fără preț.
-- **OpenStreetMap:** benzinăriile fără preț vin dintr-o copie refăcută în fiecare luni, deci o stație nou cartată apare cu până la o săptămână întârziere. Overpass (în timp real, des aglomerat) e folosit doar pentru o țară care lipsește din copie.
-- **Monitorul Prețurilor:** serverul lor trimite un certificat HTTPS incomplet. Aplicația adaugă corect certificatul intermediar lipsă (`lib/certs.js`), fără să dezactiveze verificarea securității.
-- **Cipru:** serverul observatorului răspunde în 12–22 s la fiecare cerere, oricât de mică ar fi zona cerută. Toată insula e o singură dală, deci un singur utilizator așteaptă descărcarea, o dată la 30 de minute; ceilalți primesc răspunsul din cache.
-- **Serbia:** site-ul ministerului e publicat sub licență CC BY-NC-ND 3.0 RS; aplicația afișează doar valorile (fapte), cu sursa și data. Anunțul săptămânal e găsit în pagina de vești; fluxul RSS (folosit înainte) răspunde 403 din octombrie 2026. Firewall-ul site-ului blochează temporar adresele care fac multe cereri la rând.
-- Prețurile sunt informative. Verifică la pompă.
+### Regenerating data files (optional, after `npm install`)
 
-## Costuri
+```bash
+npm run build:vendor               # copy MapLibre GL into public/vendor
+npm run build:countries            # country polygons from Natural Earth
+node scripts/build-dk-sites.js     # Danish Q8/F24 and Circle K/INGO coordinates via DAWA (no deps)
+node scripts/build-osm.js          # OpenStreetMap snapshot from Overpass (no deps; 30 min to hours)
+node scripts/check-prod.js [url]   # the production health check (exit 1 on failure)
+```
 
-**Zero.** Folosești doar servicii gratuite:
-- Vercel Hobby
-- OpenFreeMap pentru hartă (fără cheie, fără limite)
-- surse de date publice
+## Deployment
 
-DGEG (Portugalia) permite doar folosirea necomercială, așa că aplicația e pentru uz personal.
+The app runs on Vercel's free Hobby plan. `vercel.json` sets the region, the 60-second function limit and includes the OSM snapshot in the tile function's bundle. A push to `main` deploys to production; `npx vercel --prod` does the same from the command line. Two scheduled workflows keep production healthy: the OSM snapshot is rebuilt and committed every Monday, and a production check requests one tile per source plus the reference prices and fails the run (and emails the owner) if a source is down or stale.
 
-## Surse și licențe
+## Technical decisions worth discussing
 
-- Hartă: OpenFreeMap, © contribuitorii OpenStreetMap (ODbL)
-- MapLibre GL JS: licență BSD-3
-- Contururi țări: Natural Earth (domeniu public)
-- Nume stații Franța: OpenStreetMap (ODbL)
-- Benzinării fără preț: © contribuitorii OpenStreetMap (ODbL 1.0). Copia din `lib/data/osm/` e o bază de date derivată și rămâne sub ODbL 1.0 (https://www.openstreetmap.org/copyright).
-- Coordonate stații Danemarca (Q8/F24, Circle K/INGO): DAWA – Danmarks Adressers Web API (date publice daneze)
-- Prețuri pe stație: Consiliul Concurenței, ANRE, Ministère de l'Économie (Licence Ouverte 2.0), MITECO, DGEG, MIMIT (IODL 2.0), Tankerkönig / MTS-K (CC BY 4.0), E-Control, goriva.si, Ministarstvo gospodarstva RH, OK / Shell (DCC Energi) / Q8 Danmark / OIL! / Circle K Danmark / INGO (API-uri publice obligatorii prin legea daneză), Ministerul Energiei, Comerțului și Industriei din Cipru (CC BY-SA 4.0)
-- Prețuri de referință: Comisia Europeană – Weekly Oil Bulletin (CC BY 4.0), SPF Economie / Statbel (CC BY 4.0), STATEC / data.public.lu (CC0), Ministarstvo unutrašnje i spoljne trgovine Republike Srbije, Ministarstvo energetike i rudarstva Crne Gore
-- Cursuri valutare: Banca Centrală Europeană, Banca Națională a Moldovei, Narodna banka Srbije, Narodna banka na Republika Severna Makedonija
+- **Zero runtime dependencies**, including a small XLSX reader written for the EU Weekly Oil Bulletin, so cold starts stay fast and there is nothing to audit or update.
+- **A tile grid per source instead of one global grid.** Each official API has a different maximum radius and result count; sizing the tile to the API keeps every request within limits and lets the CDN cache each tile for exactly as long as that source refreshes.
+- **Cache behaviour measured, not assumed.** The CDN's stale-while-revalidate window, background refresh timing and deploy invalidation were measured on the real platform, and the client's re-request logic is built on those numbers.
+- **A weekly OSM snapshot in the repository.** Overpass is slow and often overloaded, so a GitHub Actions job rebuilds the snapshot country by country, with retries and a time budget, and commits it; the runtime reads files and uses Overpass only as a fallback. The trade-off is repository growth, which is acceptable at the current size.
+- **Cyprus as a single tile.** The observatory answers every request in 12 to 22 seconds whatever the filter, so the whole island is one tile: a single function downloads it and the CDN serves everyone else.
+- **TLS done properly.** One source sends an incomplete certificate chain; the app appends the missing public intermediate certificate instead of disabling verification.
+- **Rate limits mirrored on both sides.** Tankerkönig allows one request per minute per key; the server enforces it per instance and the client avoids sending requests it knows would be rejected.
+- **Reference prices are a separate concept.** A country average is never mixed with station prices: it is shown only where a station has no price and never affects colours or rankings.
+- **Tests on real responses.** Every adapter has a fixture trimmed from a real API response and a parser test, and the HTTP layer can be swapped so the full request path is tested without network.
+
+## Known limitations
+
+- Germany loads one area per minute (Tankerkönig's limit); OpenStreetMap stations fill the gap meanwhile.
+- Austria publishes only the cheapest stations in each area.
+- A newly mapped OpenStreetMap station can take up to a week to appear.
+- Portugal's DGEG data may be used non-commercially only, which is why the app is free and will stay so.
+- Prices are informative. Check at the pump.
+
+## Roadmap
+
+- **In progress:** English user interface.
+- **Planned:** screenshots in this README; running the Go'on and Uno-X adapters with real keys (written, not yet verified live).
+- **Blocked on access:** United Kingdom (Fuel Finder API needs a GOV.UK One Login account and a UK IP), Greece, Czechia, North Macedonia and Albania (no machine-readable official source found).
+
+## Licence and attributions
+
+The source code is **source-available** for reference and portfolio purposes; see [LICENSE](LICENSE).
+
+- Map: OpenFreeMap, © OpenStreetMap contributors (ODbL)
+- MapLibre GL JS: BSD-3-Clause
+- Country polygons: Natural Earth (public domain)
+- Stations without price and French station names: © OpenStreetMap contributors (ODbL 1.0); the snapshot in `lib/data/osm/` is a derived database under ODbL 1.0
+- Danish station coordinates: DAWA, Danmarks Adressers Web API
+- Per-station prices: Consiliul Concurenței, ANRE, Ministère de l'Économie (Licence Ouverte 2.0), MITECO, DGEG, MIMIT (IODL 2.0), Tankerkönig / MTS-K (CC BY 4.0), E-Control, goriva.si, Ministarstvo gospodarstva RH, OK / Shell (DCC Energi) / Q8 Danmark / OIL! / Circle K Danmark / INGO, Ministry of Energy, Commerce and Industry of Cyprus (CC BY-SA 4.0)
+- Reference prices: European Commission Weekly Oil Bulletin (CC BY 4.0), FPS Economy / Statbel (CC BY 4.0), STATEC / data.public.lu (CC0), Ministarstvo unutrašnje i spoljne trgovine Republike Srbije, Ministarstvo energetike i rudarstva Crne Gore
+- Exchange rates: European Central Bank, National Bank of Moldova, National Bank of Serbia, National Bank of the Republic of North Macedonia

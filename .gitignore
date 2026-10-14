@@ -1,6 +1,44 @@
+# ─── Node ────────────────────────────────────────────────────────────────────
 node_modules/
+npm-debug.log*
+*.log
+
+# ─── Chei și configurări locale ──────────────────────────────────────────────
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# ─── Vercel (legătura locală cu proiectul) ───────────────────────────────────
 .vercel/
+
+# ─── Rezultate de test și de build ───────────────────────────────────────────
 test-output/
+test-results/
+playwright-report/
+coverage/
+dist/
+
+# ─── Editoare ────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+
+# ─── Sistem de operare ───────────────────────────────────────────────────────
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+
+# ─── Documentație internă și configurări de asistent ─────────────────────────
+# Pe Git rămân doar README.md și SECURITY.md. Restul .md-urilor (CLAUDE.md, note de lucru)
+# și folderul .claude/ sunt documente de lucru: trăiesc doar local.
+*.md
+!README.md
+!SECURITY.md
+.claude/
