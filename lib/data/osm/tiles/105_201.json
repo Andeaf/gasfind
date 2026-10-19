@@ -1,1 +1,1 @@
-[{"id":"osm:w212743265","lat":50.33906,"lng":26.487003,"name":"ВОГ","brand":"WOG","p":{},"cc":"UA"},{"id":"osm:w893021665","lat":50.335984,"lng":26.494146,"name":"ANP","brand":"СТК","p":{},"x":{"fuels":["diesel","e5","e98","lpg"]},"cc":"UA"}]
+[{"id":"osm:w212743265","lat":50.33906,"lng":26.487003,"name":"WOG","brand":"WOG","p":{},"x":{"fuels":["diesel","e5"]},"cc":"UA"},{"id":"osm:w893021665","lat":50.335984,"lng":26.494146,"name":"UPG","brand":"UPG","p":{},"x":{"fuels":["diesel","e5","e98","lpg"]},"cc":"UA"}]

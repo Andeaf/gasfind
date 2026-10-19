@@ -1,1 +1,1 @@
-[{"id":"osm:n7059232885","lat":50.065407,"lng":28.128045,"name":"UPG","p":{},"cc":"UA"},{"id":"osm:w1318752880","lat":50.065386,"lng":28.128039,"name":"UPG","brand":"UPG","addr":"вулиця Миру 6 В","p":{},"x":{"fuels":["diesel","e5","lpg"]},"cc":"UA"}]
+[{"id":"osm:n14122481254","lat":50.036168,"lng":28.126937,"name":"UPG","brand":"UPG","p":{},"x":{"fuels":["diesel","e5","lpg"]},"cc":"UA"},{"id":"osm:n7059232885","lat":50.065407,"lng":28.128045,"name":"UPG","brand":"UPG","addr":"вулиця Миру 6-В","p":{},"x":{"fuels":["diesel","e5"]},"cc":"UA"}]
